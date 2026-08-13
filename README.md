@@ -1,8 +1,12 @@
-# Attest
+# Kestrel
 
 **The drug that would have killed you, and the receipt that proves we knew.**
 
 A pharmacogenomic prescribing check with a regulator-legible audit trail under it.
+
+A kestrel hovers completely motionless, watching, before it commits. Hold, check,
+then act — which is what this does to a drug order. Hospital software modules are
+named this way (Epic ships Beaker, Willow, Beacon, Stork); legal software is not.
 Biopharma Hack Day, AWS Builder Loft, Aug 13 2026.
 
 ---

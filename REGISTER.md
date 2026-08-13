@@ -364,17 +364,51 @@ day before the demo. Both sites carry a comment naming the other.
 
 **Fix:** if a second actor ever appears, hoist the map into a tiny shared module.
 
-## R-19 · OPEN · 1280x720 no-scroll is sized by construction, not yet observed
+## R-19 · CLOSED (measured in a real browser, phase4 item 2 stage 2) · 1280x720 no-scroll
 
-The layout is height-capped (`h-dvh`, `overflow-hidden` on both panes, compact
-type scale) and every demo state renders through the real route handler in
-tests — but this sandbox cannot bind a port (`next start` denied), so nobody has
-SEEN the four demo states at 1280x720. If a pane overflows, content clips
-silently rather than scrolls, which is the honest failure mode but still a
-failure.
+Was: sized by construction, never observed. It was **wrong**. Measured in Chrome
+against the running dev server with `main` pinned to exactly 1280x720, Okafor's
+red card up:
 
-**Fix:** executing session loads the four demo rows at exactly 1280x720 and
-looks. If Okafor's card clips, shrink `AlertCard`'s blockquote from 19px first.
+```
+BEFORE (before the FDA badge existed)
+  left pane  (PRESCRIBE)      overflowsY TRUE   over by 150px
+  right pane (AUDIT LEDGER)   overflowsY false
+
+AFTER (FDA badge shipped + vertical rhythm reworked)
+  Okafor + Xeloda        left over 0px  (headroom 4px)   right 0px
+  Reyes + codeine        left over 0px  (headroom 37px)  right 0px
+  Lindqvist + capecit.   left over 0px  (headroom 261px) right 0px
+  Bhattacharya + capec.  left over 0px  (headroom 265px) right 0px
+  WhyDrawer open (Okafor, FDA block included): inner 627/627, no internal scroll
+```
+
+Nothing was hidden to achieve it: the results group's own
+`scrollHeight === clientHeight === 478 === sum(children)+gaps`, so no block is
+being flex-shrunk and clipped.
+
+**What was NOT shrunk:** the recommendation blockquote stays at 19px. That is the
+string the room reads from twenty feet and legibility there beats fitting.
+
+**What paid for the 150px** (all content preserved verbatim — this was rhythm and
+placement, not text): pane padding/gaps (`py-4`→`py-2.5`, `px-6`→`px-5`,
+`gap-3`→`gap-1.5`); AlertCard padding, header `text-xl`→`text-lg`, margins and
+button padding; PatientCard tab/body padding, name `text-lg`→`text-base`, and the
+genotype provenance line moved INTO the chip row; OrderForm control padding;
+CoverageLine top padding; CredibilityCard padding, tighter 2x2 leading, label and
+context-of-use on one line, and the rationale moved from the narrow column beside
+the grid to full card width (~33px on its own).
+
+**The FDA badge costs zero height** — it sits inline on the existing
+`CPIC LEVEL A · Strong recommendation` row and expands into `WhyDrawer`, which
+overlays. `tests/ui.test.ts` pins that: the markup between `CPIC LEVEL A` and
+`FDA-labeled` must contain no `</p>`.
+
+**Residual risk, stated:** Okafor's headroom is **4px**. It fits on this machine,
+in this browser, at this font stack. Any text that grows — a longer CPIC string, a
+longer payer clause, a different renderer — puts it back over, and it will CLIP,
+not scroll. If that happens on the demo machine, take it out of `CoverageLine`'s
+clause text (11px, 3 lines) before touching the blockquote.
 
 ## R-20 · OPEN · Bright Data key authenticates but the account has NO ZONES
 
@@ -406,3 +440,36 @@ making the sponsor claim false, and the standing rule that covers scraped source
 exists precisely to stop content being presented as something it is not. If the
 direct route is used, `data/fda-pgx.json` must record `via: "direct"` and the
 sponsor claim must not be made.
+
+**Update (stage 2 shipped, badge live).** `data/fda-pgx.json` currently records
+`"via": "direct"` and stage 2 was built on top of it **without asserting Bright
+Data anywhere**. `lib/pgx/fda.ts` copies `via`, `source_url` and `retrieved_at`
+out of the file, and `WhyDrawer` renders `retrieved {retrieved_at} · via {via}` —
+so the screen says "via direct" today and would say "via brightdata" the moment
+stage 1 is re-run with a zone, with **no code change**. `tests/ui.test.ts` asserts
+against the file's own value, not a literal, so it cannot drift into a false
+claim. Nobody may say "Bright Data" on stage while that field reads `direct`.
+
+## R-21 · OPEN, DELIBERATE · the FDA badge shows EVERY row for the pair, including other subgroups
+
+`fdaAssociation(gene, drug)` returns all matching rows. For (CYP2D6, codeine) the
+FDA publishes two: section 1 *"ultrarapid metabolizers"* and section 2 *"poor
+metabolizers"*. Reyes is an ultrarapid metabolizer, so the drawer shows him a
+second row about **poor** metabolizers — true FDA text, not his subgroup.
+
+**Not filtered on purpose.** `affected_subgroups` is regulatory prose
+("intermediate or poor metabolizers"), not a join key. Matching a CPIC phenotype
+against it would be fuzzy string matching on label language — inventing a join the
+data does not support — and picking one of two rows would make the citation
+insertion-order dependent, the same defect the D6 guard exists for. Showing both
+with their section numbers is the honest option: the FDA's table, as the FDA wrote
+it.
+
+**Fix, if it ever matters:** show all rows (never one), but let the row whose
+subgroup the clinician's phenotype plainly falls in be visually first — only with
+an explicit, tested mapping, never a substring guess.
+
+**Also surfaced, unfixed:** `PatientCard`'s genotype-provenance line moved into the
+chip row during the R-19 work and **no test asserts it renders** — `ui.test.ts`
+does not import `PatientCard` at all. It is on screen (see the R-19 screenshot),
+but nothing would go red if it vanished.

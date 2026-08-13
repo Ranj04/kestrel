@@ -26,7 +26,7 @@ const plexMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Attest",
+  title: "Kestrel",
   description:
     "Pharmacogenomic prescribing checks with a regulator-legible audit trail.",
 };

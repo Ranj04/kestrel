@@ -87,7 +87,7 @@ export default function Home() {
           <div className="flex items-baseline justify-between leading-none">
             <h1 className="font-mono text-[10px] tracking-[0.2em] text-ink-soft">PRESCRIBE</h1>
             <span className="font-display text-[12px] text-ink-soft">
-              Attest · pharmacogenomic check
+              Kestrel · pharmacogenomic check
             </span>
           </div>
 
