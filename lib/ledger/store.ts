@@ -20,6 +20,32 @@ export { clausesFor, CLAUSE_LABELS, CLAUSES_BY_EVENT } from "./clauses";
 
 export const LEDGER_PATH = join(process.cwd(), "data", "ledger.jsonl");
 
+/**
+ * Serverless init. On Vercel the ledger CANNOT live on disk, for two independent
+ * reasons: data/ledger.jsonl is gitignored so it is absent from the build, and
+ * the filesystem is read-only outside /tmp so appendFileSync throws EROFS on the
+ * first prescribe. Either one kills the deployed demo on its first click.
+ *
+ * lib/ledger/state.ts already carries the whole in-memory path; this only turns
+ * it on. The store is otherwise untouched -- append/reset keep their existing
+ * EROFS/EACCES fallbacks, which stay as the belt to this braces.
+ */
+(function initLedgerBackend() {
+  if (ephemeral) return;
+  if (process.env.VERCEL) {
+    useEphemeral([]);
+    return;
+  }
+  try {
+    // Prove the file is actually appendable before trusting disk. A missing
+    // file is fine locally (first run creates it); an unwritable one is not.
+    mkdirSync(dirname(LEDGER_PATH), { recursive: true });
+    appendFileSync(LEDGER_PATH, "", "utf8");
+  } catch {
+    useEphemeral([]);
+  }
+})();
+
 export interface LedgerReadState {
   records: LedgerRecord[];
   totalLines: number;
