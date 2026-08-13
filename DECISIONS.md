@@ -141,3 +141,25 @@ not clinical values; an unresolvable drug returns 200 with `drugName: ""` and
 `resolution.matched: false` — "no CPIC guidance found" is an honest, renderable
 state, not an error. The LLM's drug answer is discarded unless it equals an index
 key character for character.
+
+## D12 — LLM provider is selected by key presence; no provider is mandatory
+
+`lib/llm.ts` picks one provider per call, in order: Bedrock (`AWS_REGION` +
+either `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` or `AWS_PROFILE`), then
+OpenAI (`OPENAI_API_KEY`), then Anthropic (`ANTHROPIC_API_KEY`), then null.
+Bedrock first because venue creds, if they materialize, are the intended demo
+path; OpenAI next because that key actually exists in `.env` today. Null stays a
+first-class outcome — the deterministic steps in `lib/pgx/resolve.ts` carry the
+whole demo with every key unset, so this file never throws and no provider is
+required. The Bedrock SDK (`@aws-sdk/client-bedrock-runtime`) is deliberately
+NOT a dependency and SigV4 is not hand-rolled: the branch does a dynamic
+`import()` in a try/catch (specifier kept in a runtime variable so neither tsc
+nor a bundler resolves the uninstalled package) and falls through to the next
+provider when the SDK is absent — inert and harmless until both the creds and
+the SDK exist. `ModelProvenance` stays frozen: the serving provider is recorded
+inside the existing fields, prefixed on `id` (`openai:gpt-4.1-nano`) and
+repeated in `params.provider`. The OpenAI default is `gpt-4.1-nano` because the
+venue's project key 403s on `gpt-4o-mini` — its model list is {gpt-4-turbo,
+gpt-4.1-nano, gpt-5.3-codex, gpt-5.4} and the gpt-5.x reasoning models reject
+`max_tokens`/`temperature: 0` (`ATTEST_OPENAI_MODEL` overrides it;
+`ATTEST_BEDROCK_MODEL` and `ATTEST_LLM_MODEL` cover the other two branches).

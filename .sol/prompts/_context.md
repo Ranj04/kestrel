@@ -179,3 +179,23 @@ Fable reads `.sol/requests/` at the start of each phase.
 Next.js 15 App Router, TypeScript, Tailwind. Node 20+. `npm run dev` on port 3000.
 Node's built-in `crypto` for SHA-256 — do not add a hashing dependency.
 If you need a package, install it and note it in your final message.
+
+---
+
+## Scraped sources — only if `phase4-sponsors` runs, and only after the video
+
+Phase 4 may put content from outside this repo on screen (a payer PDF, an FDA page).
+**It is held to exactly the CPIC standard: verbatim, with a source URL and a retrieval
+timestamp, or it does not render.**
+
+- A model may be used to **locate and quote** a passage. Never to rewrite, summarise,
+  normalise, or "clean up" one. Retrieval, not generation. That distinction is the only
+  reason a scraped line is as citable as a cached one.
+- Every scraped clause carries `origin: "scraped"`, `source_url`, and `retrieved_at`,
+  and **renders visibly differently from verified content**. Never present a scraped
+  clause as verified.
+- The demo must still run with no network. Scraped content is cached to disk at author
+  time like the CPIC data; nothing fetches at runtime.
+
+This section is additive. It does not relax anything above it — in particular it does
+not touch the join model, which is measured and was expensive to establish.
