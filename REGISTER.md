@@ -375,3 +375,34 @@ failure.
 
 **Fix:** executing session loads the four demo rows at exactly 1280x720 and
 looks. If Okafor's card clips, shrink `AlertCard`'s blockquote from 19px first.
+
+## R-20 · OPEN · Bright Data key authenticates but the account has NO ZONES
+
+Item 2 of `phase4-sponsors` (FDA pharmacogenetic associations table) is blocked at
+stage 1. Measured:
+
+```
+GET  /zone/get_active_zones            -> 200, body []          (key is VALID)
+POST /request zone=web_unlocker1       -> 400 zone "..." not found
+POST /request zone=unblocker           -> 400 zone "..." not found
+POST /request zone=datacenter          -> 400 zone "..." not found
+POST /request zone=scraping_browser    -> 400 zone "..." not found
+```
+
+The token authenticates. There is simply no zone provisioned, and `/request`
+requires one. **Creating a zone is a Bright Data dashboard action with billing
+implications — that is Ranjiv's call, not an agent's,** so it was not attempted.
+
+**The target itself is reachable**, verified separately: a direct `GET` of the FDA
+table returns 200, 75,336 bytes, 127 `<tr>` rows, with DPYD, capecitabine and
+codeine all present. So the data exists and is obtainable; only the *sponsor route*
+to it is blocked.
+
+**Fix:** create a Web Unlocker zone in the Bright Data dashboard and supply its
+name (env `BRIGHTDATA_ZONE`). Stage 1 then runs unchanged.
+
+**Do not silently substitute a direct fetch.** It would produce the same JSON while
+making the sponsor claim false, and the standing rule that covers scraped sources
+exists precisely to stop content being presented as something it is not. If the
+direct route is used, `data/fda-pgx.json` must record `via: "direct"` and the
+sponsor claim must not be made.
