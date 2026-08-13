@@ -282,8 +282,8 @@ export function supersede(input: SupersedeInput): SupersedeResult {
       "policy.revised",
       payload,
       {
-        id: "attest_policy_registry",
-        name: "Attest policy registry",
+        id: "kestrel_policy_registry",
+        name: "Kestrel policy registry",
         role: "Automated change control",
       },
       clausesFor("policy.revised"),

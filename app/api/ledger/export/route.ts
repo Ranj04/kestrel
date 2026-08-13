@@ -7,8 +7,8 @@ export async function POST(): Promise<Response> {
   try {
     const generatedAt = new Date().toISOString();
     const latestActor = readAll().at(-1)?.actor ?? {
-      id: "attest_system",
-      name: "Attest",
+      id: "kestrel_system",
+      name: "Kestrel",
       role: "Automated export",
     };
     append(
@@ -25,7 +25,7 @@ export async function POST(): Promise<Response> {
     return new Response(body, {
       headers: {
         "content-type": "application/zip",
-        "content-disposition": 'attachment; filename="attest-inspection-package.zip"',
+        "content-disposition": 'attachment; filename="kestrel-inspection-package.zip"',
         "cache-control": "no-store",
       },
     });

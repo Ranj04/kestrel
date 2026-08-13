@@ -136,11 +136,11 @@ export function inspectionReportHtml(input: InspectionPackageInput): string {
     : `CHAIN BROKEN AT RECORD ${input.verification.firstBrokenSeq}`;
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attest inspection report</title>
+<title>Kestrel inspection report</title>
 <style>
   *{box-sizing:border-box}body{max-width:980px;margin:0 auto;padding:36px;color:#211c18;background:#fff;font:15px/1.45 Georgia,serif}h1,h2,h3{margin:.3em 0}h1{font-size:28px}h2{border-bottom:2px solid #211c18;padding-bottom:8px}.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}.meta div,.record,.evidence,.authorization{border:1px solid #cfc6b8;padding:14px}.status-ok{color:#1f5d4c}.status-bad,.broken{border-color:#cf4520!important;color:#7f260e}.record,.authorization{margin:14px 0;break-inside:avoid}.record header{display:flex;justify-content:space-between;gap:16px}.record time,.hash{font:12px ui-monospace,monospace;overflow-wrap:anywhere}.clauses{font-size:13px}.signature{background:#f3ece0;padding:10px}.signature dl{display:grid;grid-template-columns:180px 1fr;margin:0}.signature dt{font-weight:bold}.signature dd{margin:0}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f7f4ef;padding:10px;font:11px/1.4 ui-monospace,monospace}.evidence{margin:12px 0}.clinical{break-before:page}@media print{body{padding:0}.record,.evidence,.authorization{page-break-inside:avoid}}
 </style></head><body>
-<header><p>ATTEST · REGULATORY INSPECTION PACKAGE</p><h1>Electronic audit ledger</h1></header>
+<header><p>KESTREL · REGULATORY INSPECTION PACKAGE</p><h1>Electronic audit ledger</h1></header>
 <section class="meta"><div><strong>Generated</strong><br>${escapeHtml(input.generatedAt)}</div><div><strong>Records</strong><br>${input.records.length}</div><div class="${input.verification.ok ? "status-ok" : "status-bad"}"><strong>Verification</strong><br>${escapeHtml(status)}<br><small>Checked ${escapeHtml(input.verification.checkedAt)}</small></div></section>
 <p>§11.10(b) inspection copies are included in both human-readable form (this report) and electronic form (<code>ledger.jsonl</code>).</p>
 <h2>Snapshot-bound authorizations</h2>
@@ -152,7 +152,7 @@ ${input.records.map((record) => recordHtml(record, input.verification.brokenSeqs
 }
 
 function readme(input: InspectionPackageInput): string {
-  return `ATTEST INSPECTION PACKAGE
+  return `KESTREL INSPECTION PACKAGE
 Generated: ${input.generatedAt}
 
 CONTENTS

@@ -133,7 +133,7 @@ export function LedgerPane() {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = "attest-inspection-package.zip";
+      anchor.download = "kestrel-inspection-package.zip";
       anchor.click();
       URL.revokeObjectURL(url);
       await refresh();
