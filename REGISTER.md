@@ -235,3 +235,31 @@ login-gated. **Do not claim Epic honours `overrideReasons`, `suggestions`, or th
 feedback endpoint.** The safe and true form is "the standard defines them and we
 implement them." Also unverified: any figure for US hospital Genomics Module adoption —
 none was found, treat any number heard as unsourced.
+
+## R-16 · OPEN (guard specified, not yet written) · neither CPIC key is unique; multi-gene guidelines flatten
+
+Surfaced while checking `BUILD_ORDER.md` Phase 0 against the real cache rather than
+against its own description. Both candidate join keys are one-to-many:
+
+| key | distinct keys | matching >1 row | disagreeing on severity |
+|---|---|---|---|
+| `phenotype` | 609 | 274 | 105 |
+| `lookup` | 934 | 339 | 146 |
+
+Cause: a multi-gene recommendation (amitriptyline is keyed on CYP2D6 **and** CYP2C19)
+becomes several rows under each single-gene key, differing by the *other* gene.
+`amitriptyline/CYP2D6/Normal Metabolizer` alone spans `{none, caution, critical}`.
+
+**This corrects an understatement of mine.** D3 warned that `phenotype` is non-unique and
+did not warn that `lookup` is too — more so, in fact. The demo is unaffected because
+`lookup` is 1-to-1 for all three demo pairs, but that is a property of those pairs.
+
+**Open because the guard is specified, not implemented.** D6 and
+`phase1-fable-engine.md` require `evaluate()` to assert row agreement and raise nothing
+on conflict. Fable writes it in Phase 1. It is owed a test that constructs a synthetic
+two-row disagreement and proves the guard fires — a guard never observed to trigger is
+rule 4a-bis's vacuous instrument, which is how R-7 got caught.
+
+**Not fixed by widening the key.** Adding the second gene to the join would resolve
+amitriptyline and is the correct long-term model, but it changes `GeneResult` shape and
+every call site for a case no demo patient reaches. Recorded rather than built.

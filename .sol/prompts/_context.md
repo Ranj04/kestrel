@@ -92,7 +92,26 @@ For DPYD and CYP2D6, CPIC's `lookupkey` is an **activity score**. For HLA it is 
 - Match on `lookup`, exact after trim and case-fold. Never fuzzy, never substring.
 - Render `phenotype` to the user — an activity score of `0.0` means nothing to a clinician.
 - Never join on `phenotype`: it is `null` for HLA, and it is **not unique** — DPYD `"0.0"` and
-  `"0.5"` are both `"Poor Metabolizer"`, so a phenotype join can silently pick the wrong row.
+  `"0.5"` are both `"Poor Metabolizer"`, and their recommendations genuinely differ (the `0.5`
+  text offers a reduced-dose path; the `0.0` text does not). A phenotype join can therefore put
+  a clinically wrong recommendation on screen.
+
+### Neither key is unique in general. Assert, do not assume.
+
+`lookup` is 1-to-1 for all three demo pairs, but **it is not unique across the cache**:
+
+| key | distinct keys | keys matching >1 row | of those, disagreeing on severity |
+|---|---|---|---|
+| `phenotype` | 609 | 274 | 105 |
+| `lookup` | 934 | 339 | 146 |
+
+The cause is **multi-gene recommendations**: amitriptyline is keyed on CYP2D6 *and* CYP2C19
+jointly, so any single-gene lookup returns several rows that differ by the other gene.
+
+So `evaluate()` must not take "the first row encountered" — that is insertion-order dependent,
+which is template rule 2's nondeterministic-selection defect. **If more than one row matches,
+assert they agree on severity and recommendation text; if they disagree, raise nothing and log
+it.** Rendering one of two conflicting clinical answers is the worst defect available here.
 
 The one deliberate exception is `data/policies.json`, whose `criterion.phenotype` matches the
 phenotype name, because payers write coverage policy in phenotype language. That file says so.

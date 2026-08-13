@@ -102,6 +102,25 @@ whose **`lookup`** matches `result.lookup`. Match case-insensitively and tolerat
 Joining on `phenotype` is null for HLA and non-unique for DPYD, so it can cite the wrong row.
 Carry `phenotype` onto the `Alert` for rendering — the card must say "Poor Metabolizer", not "0.0".
 
+**`lookup` is not unique either. Assert, do not take the first match — this is D6, decided.**
+Measured on the real cache, 339 `lookup` keys match more than one row and 146 of those disagree on
+severity, because multi-gene guidelines flatten into per-gene buckets. So:
+
+```
+rows = all entries for (drugName, gene) whose `lookup` equals the patient's, exactly
+  1 row                                   -> use it
+  N rows agreeing on severity AND text    -> use it
+  N rows disagreeing                      -> raise NO alert, log the conflict
+```
+
+"First one encountered" makes the clinical answer insertion-order dependent, which is template
+rule 2's nondeterministic-selection defect on the one output that must never be wrong. Rendering
+one of two conflicting recommendations is worse than rendering none.
+
+It is 1-to-1 for all three demo pairs, so **this guard should never fire during the demo — write
+a test that proves it can.** A guard that has never been observed to trigger is rule 4a-bis's
+vacuous instrument. Construct a synthetic two-row disagreement and assert no alert is raised.
+
 Copy CPIC's strings through **verbatim**. Do not reword, summarize, truncate, or title-case
 anything. `sourceUrl` comes from the entry's `_source`.
 

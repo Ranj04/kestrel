@@ -12,47 +12,56 @@ certify it.**
 
 ---
 
-## Phase 0 — blocker. Nothing else works until this is green.
+## Phase 0 — RESOLVED in commit 88265e7 and arbitrated. Do not re-apply the edit below.
 
-**`npm run verify` currently reports 7 failures.** The cache is keyed on the wrong
-field. `scripts/cache_cpic.py::lookup_terms()` prefers `lookupkey`, which for DPYD and
-CYP2D6 is the **activity score** (`"0.0"`, `"≥3.75"`), not the phenotype name. The
-readable name is in `phenotypes` — present on 2,083 of 2,115 rows. The 32 without it
-are HLA genes, which is the case the current order was written for.
+> **Status: green. `npm run verify` exits 0.** This section originally read *"`npm run
+> verify` currently reports 7 failures"* and prescribed a specific edit to
+> `lookup_terms()`. **That was true when written and is now stale** — the same root
+> cause was fixed in commit `88265e7`, in the opposite direction. This file was
+> untracked on disk at the time and was swept into that commit by a `git add -A`
+> without being read. **Do not apply the phenotypes-first edit. It would regress the
+> demo.** Kept here rather than deleted, per rule 4i: a removal nobody can review is
+> worse than a correction someone can.
 
-```python
-# scripts/cache_cpic.py, lookup_terms()
-return rec.get("phenotypes") or rec.get("lookupkey") or {}   # was: lookupkey first
-```
+### The diagnosis was right
 
-Also carry the score through in `build_index()`, it is needed below:
+`lookupkey` for DPYD and CYP2D6 is the **activity score** (`"0.0"`, `"≥3.75"`), not the
+phenotype name; the readable name is in `phenotypes`, present on **2,083 of 2,115** rows,
+the remainder HLA. Both counts confirmed exactly against the cache.
 
-```python
-"activityScore": (rec.get("activityscore") or {}).get(gene),
-```
+### The prescribed fix was backwards
 
-Then `python3 scripts/cache_cpic.py && npm run verify`. **Verified by in-memory
-simulation against the real cache:** all three demo paths resolve with correct severity,
-Level A true on each, and HLA still falls through correctly to `"*57:01 positive"`.
+The index now carries **both** fields — `lookup` (joins) and `phenotype` (displays) — and
+`data/patients.json` carries both, copied verbatim from CPIC's `diplotype` table. Keying
+on `phenotypes` first would make Okafor's join 1-to-2:
 
-### The design decision this exposes — decide it before Fable writes `evaluate.ts`
+| activity score | recommendation text |
+|---|---|
+| `0.5` partial deficiency | "Avoid… **In the event alternative agents are not suitable, 5-FU should be administered at a strongly reduced dose with early therapeutic drug monitoring.**" |
+| `0.0` complete deficiency | "Avoid use of 5-fluorouracil or 5-fluorouracil prodrug-based regimens." |
 
-Keying by phenotype is **one-to-many**. `"Poor Metabolizer"` matches 2 rows (activity
-scores 0.5 and 0.0); `"Ultrarapid Metabolizer"` matches **11**. Every row in each group
-agrees on severity here, so the demo is safe — but if `evaluate()` takes "the first one
-encountered," the selection is insertion-order dependent. That is the same defect class
-as template rule 2's heap-order-nondeterministic hold selection.
+Okafor is a homozygous `c.1905+1G>A (*2A)` — complete deficiency, score `0.0`. The `0.5`
+row offers a reduced-dose path that is clinically wrong for her, and "first row
+encountered" would decide which one the demo quotes.
 
-Pick one, record it in `DECISIONS.md`:
+### The design decision it exposed was real, and both options were needed
 
-- **(a) Assert agreement.** If N rows match and they disagree on severity, throw. Cheap,
-  and it converts a silent wrong answer into a loud failure.
-- **(b) Disambiguate on activity score.** Add `activityScore` to `data/patients.json` —
-  Okafor's `c.1905+1G>A` homozygote is complete deficiency, score `"0.0"` — and match on
-  phenotype **and** score. More correct, and selects the exact row whose text is in the
-  demo script.
+Arbitrated by Ranjiv; recorded as **D6**. The register entry is **R-16**.
 
-(b) is better; (a) is fine if the clock is tight. **Doing neither is not fine.**
+Neither key is unique in general — measured on the real cache:
+
+| key | distinct keys | matching >1 row | of those, disagreeing on severity |
+|---|---|---|---|
+| `phenotype` | 609 | 274 | 105 |
+| `lookup` | 934 | 339 | 146 |
+
+Cause: multi-gene guidelines (amitriptyline on CYP2D6 × CYP2C19) flatten into per-gene
+buckets. `lookup` is 1-to-1 for all three demo pairs, which is why the demo is safe — a
+property of those three pairs, not of the key.
+
+So **(b) and (a), not (b) or (a)**: join on `lookup` (that is (b), already implemented),
+**and** assert the matched rows agree, raising nothing when they conflict (that is (a),
+specified in `phase1-fable-engine.md` and owed a test that proves the guard can fire).
 
 ## Phase 0b — structure and environment
 

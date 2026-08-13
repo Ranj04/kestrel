@@ -29,6 +29,14 @@ Joining on `phenotype` instead fails two ways — it is `null` for every HLA gen
 and it is not unique, so DPYD `"0.0"` and `"0.5"` both being `"Poor Metabolizer"`
 means a phenotype join can pick the wrong row and cite the wrong recommendation.
 
+**Neither key is unique in general, and my earlier framing here understated that.**
+This entry warned that `phenotype` is non-unique and did not warn that `lookup` is
+too. Measured against the real cache: `lookup` has 339 keys matching more than one
+row, 146 of which disagree on severity — *more* ambiguous than `phenotype`, because
+multi-gene recommendations (amitriptyline on CYP2D6 × CYP2C19) flatten into several
+rows per single-gene key. `lookup` is 1-to-1 for all three demo pairs, which is why
+the demo is safe, but that is a property of these three pairs, not of the key. See D6.
+
 **This was not theoretical.** `data/patients.json` shipped with
 `lookup: "Poor Metabolizer"`, which matches nothing, so every alert silently
 failed to fire — the exact silent failure the preflight was built for. It was
@@ -47,3 +55,22 @@ code so no agent is blocked on it.
 The clinical stop stays the hero; the payer clause renders as one line beneath
 it. A room feels a preventable death, not a claim. If the coverage line ever
 competes for attention, shrink it.
+
+## D6 — `evaluate()` asserts row agreement; it never takes the first match
+
+A `(drug, gene, lookup)` triple can match more than one CPIC recommendation row,
+because multi-gene guidelines flatten into per-gene buckets. Taking "the first one
+encountered" makes the clinical answer depend on insertion order — template rule 2's
+nondeterministic-selection defect, applied to the one output that must never be wrong.
+
+So: match all rows for the triple. One row, use it. Several rows that agree on
+severity and recommendation text, use it. **Several rows that disagree — raise no
+alert and log the conflict.** Rendering one of two conflicting recommendations is
+worse than rendering none, and a `pended`-style silence is honest where a coin-flip
+is not.
+
+This is BUILD_ORDER's option (a) applied on top of its option (b), not instead of it.
+The two were offered as alternatives; the measurement says both are needed, because
+(b) fixes which vocabulary you join on and (a) fixes what you do when the join is
+still ambiguous. Verified 1-to-1 for all three demo pairs, so the guard is expected
+never to fire during the demo — it exists for the case that is not on the script.
