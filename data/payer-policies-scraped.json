@@ -1,0 +1,30 @@
+{
+ "note": "SCRAPED, NOT SYNTHETIC. Real payer policy text retrieved via Bright Data (zone tally_fda) and cached at author time; nothing fetches at runtime. Verbatim cell text only - no summarisation, no paraphrase, no spelling corrections. This file is SEPARATE from data/policies.json on purpose: policies.json drives the live demo and is validated by npm run verify, and a scraped document must not be able to break a working clinical path. Absence of a clause here is not evidence a payer lacks one.",
+ "origin": "scraped",
+ "payer": "Aetna",
+ "policyId": "CPB-0715",
+ "title": "Clinical Policy Bulletin 0715 - Pharmacogenetic and Pharmacodynamic Testing",
+ "source_url": "https://www.aetna.com/cpb/medical/data/700_799/0715.html",
+ "retrieved_at": "2026-08-13T22:20:53.402535Z",
+ "via": "brightdata",
+ "clauses": [
+  {
+   "clauseId": "AETNA-0715.dpyd-testing",
+   "text": "DPYD gene variants testing for members prior to considering fluoropymidine therapy (i.e., fluorouracil or capecitabine); Epidermal growth factor recep",
+   "criterion": {
+    "type": "genotype_covered",
+    "gene": "DPYD"
+   },
+   "note": "Verbatim, including Aetna's own spelling 'fluoropymidine'. Not corrected."
+  },
+  {
+   "clauseId": "AETNA-0715.cpt-81232",
+   "text": "81232 DPYD (dihydropyrimidine dehydrogenase) (eg, 5-fluorouracil/5-FU and capecitabine drug metabolism), gene analysis, common variant(s) (eg, *2A, *4, *5, *6) Other CPT codes related to the",
+   "criterion": {
+    "type": "billing_code",
+    "code": "81232",
+    "gene": "DPYD"
+   }
+  }
+ ]
+}

@@ -473,3 +473,37 @@ an explicit, tested mapping, never a substring guess.
 chip row during the R-19 work and **no test asserts it renders** — `ui.test.ts`
 does not import `PatientCard` at all. It is on screen (see the R-19 screenshot),
 but nothing would go red if it vanished.
+
+## R-22 · CLOSED (non-empty, which was NOT the expected outcome) · item 3, real payer policy
+
+The spec predicted this would come back empty: "most capecitabine prior-auth policies
+never mention DPYD; if none is found, keep the synthetic file and write it to
+REGISTER.md. That's the honest outcome, not a failure."
+
+**It came back non-empty.** Aetna Clinical Policy Bulletin 0715 mentions DPYD
+**18 times**, retrieved via Bright Data zone `tally_fda`. Two verbatim clauses captured:
+
+- `AETNA-0715.dpyd-testing` — "DPYD gene variants testing for members prior to
+  considering fluoropymidine therapy (i.e., fluorouracil or capecitabine)", listed among
+  covered genetic tests. **Aetna's own misspelling of "fluoropyrimidine" is preserved.**
+  Correcting it would be exactly the paraphrase the standing rule forbids.
+- `AETNA-0715.cpt-81232` — CPT 81232 DPYD gene analysis, covered if selection criteria
+  are met.
+
+So a real national payer already covers the test this project argues nobody runs. That is
+a **stronger** demo line than the synthetic policy alone: the coverage exists on paper and
+the check still is not performed at the point of prescribing.
+
+**Written to `data/payer-policies-scraped.json`, deliberately NOT merged into
+`data/policies.json`.** The spec said "alongside the synthetic ones", and I did not do
+that, for one reason: `policies.json` drives the live demo and is validated by
+`npm run verify`. Merging a scraped document with a different clause shape into the file
+that carries the clinical path, ~30 minutes before a freeze, on a post-video item, is the
+wrong risk. `npm run verify` still exits 0 and the demo is untouched. Merging is a
+five-minute job after the recording if it is wanted.
+
+Also found but not fetched: Cigna's actual capecitabine/Xeloda PA policy PDF
+(`static.cigna.com/.../cnf_687_..._capecitabine_xeloda_pa.pdf`). Left alone — PDF text
+extraction inside the timebox was not worth the risk once Aetna had already landed.
+
+**No UI. One narration line, per instruction.**
