@@ -70,10 +70,10 @@ export function AlertCard({
   // that sits on it. Patient card and order form stay mounted behind, dimmed.
   if (critical) {
     return (
-      <div className="rise flex min-h-0 flex-col px-3 pt-2 text-paper-raised">
-        <p className="font-mono text-3xl font-semibold tracking-tight">⛔ DO NOT PRESCRIBE</p>
+      <div className="rise flex min-h-0 flex-col px-3 pt-2 text-ink">
+        <p className="font-mono text-3xl font-semibold tracking-tight text-accent">⛔ DO NOT PRESCRIBE</p>
 
-        <p className="mt-1 font-mono text-sm uppercase tracking-[0.2em] text-paper-raised/85">
+        <p className="mt-1 font-mono text-sm uppercase tracking-[0.2em] text-ink/85">
           {alert.gene} · {alert.phenotype ?? alert.diplotype} · {alert.drugName}
         </p>
 
@@ -101,7 +101,7 @@ export function AlertCard({
               type="button"
               onClick={onWhy}
               title="FDA Table of Pharmacogenetic Associations — open the verbatim entry"
-              className="border border-dashed border-paper-raised/60 px-1.5 py-0.5 font-semibold hover:bg-paper-raised/10"
+              className="border border-dashed border-paper-raised/60 px-1.5 py-0.5 font-semibold hover:bg-ink/5"
             >
               FDA-labeled ⓘ
             </button>
@@ -109,7 +109,7 @@ export function AlertCard({
         </p>
 
         {alert.implication && (
-          <p className="mt-1 max-w-[70ch] text-sm leading-snug text-paper-raised/85">
+          <p className="mt-1 max-w-[70ch] text-sm leading-snug text-ink/85">
             {alert.implication}
           </p>
         )}
@@ -118,14 +118,14 @@ export function AlertCard({
         <div className="mt-3 flex items-center gap-3">
           <button
             onClick={onWhy}
-            className="border border-paper-raised/70 px-4 py-1.5 font-mono text-sm hover:bg-paper-raised/10"
+            className="border border-ink/40 px-4 py-1.5 font-mono text-sm hover:bg-ink/5"
           >
             Why this?
           </button>
           <button
             onClick={onOverride}
             disabled={recorded !== null}
-            className="border border-paper-raised/70 px-4 py-1.5 font-mono text-sm hover:bg-paper-raised/10 disabled:opacity-50"
+            className="border border-ink/40 px-4 py-1.5 font-mono text-sm hover:bg-ink/5 disabled:opacity-50"
           >
             {/* human-signature gates the dismissal behind Sol's 21 CFR 11 modal — never a plain dismiss */}
             Override and sign

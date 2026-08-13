@@ -39,3 +39,46 @@ the spacing snap paid for the bigger recommendation), Reyes 64px, Lindqvist
 284px, Bhattacharya 285px. WhyDrawer inner 635/635, no internal scroll.
 Not on the scale yet: the arbitrary `text-[8px…13px]` metadata sizes in both
 panes — that is stage-2/3 component work, not token work.
+
+## Stage 2 (the two moments) — SHIPPED
+
+**2a — critical owns the pane.** The vermilion field is painted by `page.tsx`
+(`absolute inset-0 z-10 bg-accent/95` — a flow child cannot reach the pane
+edges); `AlertCard`'s critical branch is the content that sits on it. Hierarchy
+exactly per spec: step-3 mono headline, step−1 mono uppercase wide-tracked
+kicker, the CPIC sentence at step-1 with **40px above and below** (`my-10`) and
+a 60ch measure cap, badge row at step−1 with the FDA badge inline (test-pinned),
+implication subordinate, two equal-weight ghost buttons.
+
+**Deviation, stated:** the patient card recedes at `opacity-40` but sits ABOVE
+the field (`z-20`), not beneath it — its tabs are the demo's only exit from a
+critical state and had to stay clickable. At 40% over the red it still reads as
+behind glass. The order form recedes BENEATH the field: mounted, dimmed, and
+physically unreachable (a click on it lands on the headline — verified by
+hit-test). The alert content reclaims the covered form's flow height with
+`-mt-14` (56px = form + gap), which is also what lets Okafor fit.
+
+**Height (R-19).** The reserve lever was pulled as named: `CoverageLine` clause
+text and `CredibilityCard` rationale went `leading-snug → leading-tight`,
+CredibilityCard `py-2 → py-1`. The hero's 40px and the recommendation size were
+not touched. Coverage renders under the clinical block on its own paper slip
+(ink-soft on vermilion is illegible); credibility sits below it, bottom-pinned.
+
+**caution** keeps the card, headline raised to step-1 in `--amber`; buttons
+equalized; arbitrary px sizes snapped onto the scale. **none** got QUIETER: the
+left rules came off all three no-alert lines (emphasis removed, never added)
+and 12px snapped up to step−1.
+
+**2b — the chain breaking** ended up in `components/ledger/` itself (Sol's
+design import): 4px `--accent` left rule at full strength, row content at 0.6
+opacity, no transition, MISMATCH replacing the tick, broken header at step-1 in
+`--accent-void`. The global-CSS hook block written here first was superseded by
+that import and deleted rather than left looking load-bearing. Verified in
+Chrome post-import: rule `rgb(207,69,32)` 4px, opacity 0.6, header 21.33px.
+
+**Measured at 1280×720** (main pinned, real Chrome, dev server), left/right
+pane overflow and the critical states' real slack (the `mt-auto` air between
+the buttons row and the coverage slip): Okafor 0/0 overflow, +18px slack;
+Reyes 0/0, +50px; Lindqvist 0/0, 293px headroom; Bhattacharya 0/0, 295px.
+Patient tabs hit-testable through the field; order form blocked. Right-pane
+figures predate Sol's ledger restyle by minutes; his list scrolls internally.

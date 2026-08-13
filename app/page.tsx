@@ -117,7 +117,11 @@ export default function Home() {
 
           {/* the vermilion field: edge to edge, instant — no easing, nothing appended
               below a form. AlertCard's critical branch is the content that sits on it. */}
-          {critical && <div aria-hidden className="absolute inset-0 z-10 bg-accent/95" />}
+          {/* Design handoff: the field is PAPER at 93%, not vermilion. The blocking
+              signal is the D1 headline in --accent; flooding the pane with accent
+              spends the colour everywhere and drops the coverage slip and
+              credibility grid onto red, where ink text stops being legible. */}
+          {critical && <div aria-hidden className="absolute inset-0 z-10 bg-paper/[0.93]" />}
 
           {response ? (
             <div
