@@ -90,12 +90,20 @@ The template's gate assumes real Postgres, migrations, and a PR. This project ha
 database, no migrations, and no review branch. Replacement, applied per phase:
 
 ```
-npx tsc --noEmit          # typecheck
-npx next lint             # grep the count, do not eyeball the tail (4h)
-npm test                  # name the tests that cover this phase, not the total
-npm run verify            # data layer consistency
-sh scripts/check-removals.sh   # rule 4i, mechanical
+npx tsc --noEmit               # typecheck. assert exit code
+npx eslint .                   # NOT `next lint` -- removed in Next 16. see R-17
+npm test                       # name the tests that cover this phase, not the total
+npm run verify                 # data layer consistency
+sh scripts/check-removals.sh   # rule 4i, mechanical. read its file COUNT, not just exit
 ```
+
+**R-17 — the lint line used to be a false green and this is why it changed.** It was
+`npx next lint | grep -cE "^(app|lib|components)/"`. `next lint` does not exist in Next
+16, so the command errors and the grep prints `0` — identical to a clean run. Two
+instruments in this gate can report success while measuring nothing: that one, and
+`check-removals.sh` when it compares 0 files. **Assert on exit codes and on how many
+files were examined, never on a count a missing binary can produce.** While
+`eslint.config.mjs` is broken, lint closes as NOT MEASURED, never as clean.
 
 plus: the artifact captured and independently challenged by the party that did not
 produce it, and the cross-check exchange written to `.sol/reviews/`.

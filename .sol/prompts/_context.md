@@ -103,7 +103,7 @@ For DPYD and CYP2D6, CPIC's `lookupkey` is an **activity score**. For HLA it is 
 | key | distinct keys | keys matching >1 row | of those, disagreeing on severity |
 |---|---|---|---|
 | `phenotype` | 609 | 274 | 105 |
-| `lookup` | 934 | 339 | 146 |
+| `lookup` | 940 | 345 | 152 |
 
 The cause is **multi-gene recommendations**: amitriptyline is keyed on CYP2D6 *and* CYP2C19
 jointly, so any single-gene lookup returns several rows that differ by the other gene.

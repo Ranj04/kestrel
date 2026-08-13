@@ -31,8 +31,8 @@ means a phenotype join can pick the wrong row and cite the wrong recommendation.
 
 **Neither key is unique in general, and my earlier framing here understated that.**
 This entry warned that `phenotype` is non-unique and did not warn that `lookup` is
-too. Measured against the real cache: `lookup` has 339 keys matching more than one
-row, 146 of which disagree on severity — *more* ambiguous than `phenotype`, because
+too. Measured against the shipped index: `lookup` has 345 keys matching more than one
+row, 152 of which disagree on severity — *more* ambiguous than `phenotype`, because
 multi-gene recommendations (amitriptyline on CYP2D6 × CYP2C19) flatten into several
 rows per single-gene key. `lookup` is 1-to-1 for all three demo pairs, which is why
 the demo is safe, but that is a property of these three pairs, not of the key. See D6.
@@ -74,3 +74,70 @@ The two were offered as alternatives; the measurement says both are needed, beca
 (b) fixes which vocabulary you join on and (a) fixes what you do when the join is
 still ambiguous. Verified 1-to-1 for all three demo pairs, so the guard is expected
 never to fire during the demo — it exists for the case that is not on the script.
+
+**Implemented and observed to fire (Phase 1).** `tests/pgx.test.ts` proves it three
+ways: a synthetic two-row agreement still alerts (positive control), a synthetic
+two-row disagreement returns null AND logs the conflict (the log is what separates
+"guard fired" from "join found nothing" — the return values are identical), and a
+sweep of every real conflicting triple in the shipped cache — 331 of them, counted
+at runtime and asserted >100 so the sweep itself cannot go vacuous — through the
+REAL `evaluate()` and the REAL index returns null for all, with one logged conflict
+each.
+
+## D7 — `severityOf` has exactly one declaration, and the preflight runs under tsx
+
+The rule lives in `lib/pgx/evaluate.ts` and nowhere else. `scripts/verify-setup.mjs`
+imports it — dynamically, AFTER its cache-existence check, so the friendly
+"run cache_cpic.py" message still wins when the cache is missing (a top-level import
+would hit `lib/pgx/index.ts`'s load-time throw first). Plain `node` on v20.19.6
+cannot import a `.ts` module, so `npm run verify` and `verify:prove` are now
+`node --import tsx scripts/verify-setup.mjs` (package.json; `tsx` was already a
+devDependency for `npm test`). Probe evidence: mutating `/avoid/i` to `/avo1d/i` in
+`evaluate.ts` makes `npm run verify` report 2 FAILURE(S); restoring makes it PASS —
+therefore the preflight is reading the same declaration `evaluate()` runs, not a copy.
+
+## D8 — the snapshot hash recipe is a two-key contract with Sol
+
+`snapshot.entryHash = stableHash({ cpicEntry, clause })` — those exact key names,
+where `cpicEntry` is the matched `data/cpic/index.json` entry object verbatim and
+`clause` is the matched clause object from `data/policies.json` verbatim
+(`{ clauseId, text, criterion, scopes }`), or `null` when no clause matched.
+Sol's phase 2b recomputes the identical object to detect drift, so renaming either
+key silently breaks the supersede beat. `snapshotId` year is the newest citation's
+year ("undated" if CPIC ships none). `scopes` = `dosing.<drug>` +
+`monitoring.<gene>` when CPIC's own recommendation/comments text mentions
+monitoring, unioned with the matched clause's scopes.
+
+## D9 — supersede overlays are registered hooks, not edits to Fable's files
+
+`lib/pgx/index.ts` exports `setIndexOverlay()` and `lib/pgx/policy.ts` exports
+`setPolicyOverlay()`. Phase 2b's revision happens in memory only — the JSON files
+on disk are sources of truth and a demo button must never mutate them. Sol
+registers a transform instead of editing Fable-owned files, which inverts the
+dependency direction the phase2b prompt sketched ("have Fable's getIndex() consult
+Sol's overlay") without either agent touching the other's code.
+
+## D10 — the prescribe route imports Sol's ledger directly; no shim ever shipped
+
+`lib/ledger/store.ts` landed before the route was written, so the planned
+`ledger-shim.ts` was never created: the route imports `append` and `clausesFor`
+from `lib/ledger`, which also means the clause-tag table has exactly one
+declaration (Sol's). Ledger append failures propagate as a 500 by design —
+prescribing off the record is worse than failing loudly. Consequences:
+`tests/prescribe.test.ts` appends real records to `data/ledger.jsonl` (that is the
+point — it pins the route's `append` call sites, the pin Sol's ledger tests cannot
+reach; deleting the `alert.raised` append line turns the named "money shot" test
+red, observed), so reset the ledger before a demo run. And `npm test` now runs
+with `--test-concurrency=1`: Sol's ledger tests reset/tamper the same file, and
+parallel test-file processes would race on it.
+
+## D11 — small honest shims in the engine, all labelled in-source
+
+`BRAND_MAP` in `lib/pgx/resolve.ts` (xeloda→capecitabine, adrucil→fluorouracil) so
+the demo works with no LLM key; `DEMO_ACTORS` in the prescribe route (dr_chen's
+display identity — unknown ids pass through as themselves, never inventing a
+person); `Order.dose`/`Order.route` are regex ECHOES of the prescriber's own text,
+not clinical values; an unresolvable drug returns 200 with `drugName: ""` and
+`resolution.matched: false` — "no CPIC guidance found" is an honest, renderable
+state, not an error. The LLM's drug answer is discarded unless it equals an index
+key character for character.

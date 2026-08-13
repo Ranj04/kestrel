@@ -151,3 +151,20 @@ rounds, the task was too big (rule 9) — say so.
 
 **If you both independently flag the same line, it goes to the top of the fix list**
 ahead of anything either raised alone (rule 10).
+
+---
+
+## What your agreement with the other auditor is worth
+
+**Sol runs on `codex exec`** (verified at Phase 0: `which codex` → present,
+`codex login status` → authenticated). Fable runs on `Agent(model: "fable")`.
+These are **genuinely different models**, not two instances of one.
+
+So template **rule 10 applies at full weight here**: where you and the other
+auditor independently reach the same finding, that agreement is strong evidence.
+Where you disagree, say so plainly and do not soften it — Opus 5 arbitrates, and
+a disagreement surfaced is worth more than a consensus manufactured.
+
+Had Sol fallen back to a same-model subagent, rule 10 would have been downweighted
+(two instances of one model agreeing is much weaker than two models agreeing). It
+did not. Nothing here is downweighted.

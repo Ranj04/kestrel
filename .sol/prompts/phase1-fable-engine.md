@@ -103,7 +103,7 @@ Joining on `phenotype` is null for HLA and non-unique for DPYD, so it can cite t
 Carry `phenotype` onto the `Alert` for rendering — the card must say "Poor Metabolizer", not "0.0".
 
 **`lookup` is not unique either. Assert, do not take the first match — this is D6, decided.**
-Measured on the real cache, 339 `lookup` keys match more than one row and 146 of those disagree on
+Measured on the shipped index, 345 `lookup` keys match more than one row and 152 of those disagree on
 severity, because multi-gene guidelines flatten into per-gene buckets. So:
 
 ```

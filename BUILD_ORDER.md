@@ -53,7 +53,7 @@ Neither key is unique in general — measured on the real cache:
 | key | distinct keys | matching >1 row | of those, disagreeing on severity |
 |---|---|---|---|
 | `phenotype` | 609 | 274 | 105 |
-| `lookup` | 934 | 339 | 146 |
+| `lookup` | 940 | 345 | 152 |
 
 Cause: multi-gene guidelines (amitriptyline on CYP2D6 × CYP2C19) flatten into per-gene
 buckets. `lookup` is 1-to-1 for all three demo pairs, which is why the demo is safe — a
@@ -136,12 +136,22 @@ decorates.
 ## Per-phase gate
 
 ```bash
-npx tsc --noEmit
-npx next lint | grep -cE "^(app|lib|components)/"   # grep the count, never the tail
+npx tsc --noEmit;              echo "tsc exit=$?"
+npx eslint . -f unix | tail -1; echo "eslint exit=${PIPESTATUS[0]}"   # see R-17
 npm test                                             # name the tests for THIS phase
-npm run verify
-sh scripts/check-removals.sh
+npm run verify;                echo "verify exit=$?"
+sh scripts/check-removals.sh;  echo "removals exit=$?"
 ```
+
+> **The lint line was changed because the old one could not fail — see R-17.** It read
+> `npx next lint | grep -cE "^(app|lib|components)/"`. `next lint` was removed in Next 16,
+> so that command errors and the grep prints `0`, which is exactly what a clean run
+> prints. **Assert on the exit code, never on a piped count a missing binary can satisfy.**
+> `eslint.config.mjs` currently crashes on load (Fable owns it). Until that is fixed,
+> record the lint criterion as **NOT MEASURED**. Never as clean.
+>
+> Same trap in `check-removals.sh`: it compares only `tests/*.test.ts` against HEAD, so
+> `exit=0` having compared **0 files** is not a pass. It prints its own file count — read it.
 
 Plus: the artifact captured and **challenged by the party that did not produce it**, and
 the exchange written to `.sol/reviews/`. That directory is this project's PR description.

@@ -52,7 +52,7 @@ a PR. This project has none. Replacement gate in `CLAUDE.md` ADAPTATION 4;
 project-specific evidence table in ADAPTATION 3. **The standard is unchanged — only the
 artifact table is.** No claim is downgraded to "probably fine."
 
-## R-5 · OPEN (content reconciled, duplication remains) · two severity implementations
+## R-5 · CLOSED · two severity implementations
 
 **Update:** an independent audit found the two copies did not merely duplicate, they
 **disagreed** — the preflight tested `/avoid/i` only, while the spec adds
@@ -85,6 +85,17 @@ branch is a four-alternative regex, while the prompt carried one vague English s
 differently. The prompt now carries the literal rule and an explicit instruction to
 **move it, not copy it**, with this entry cited. Still OPEN until Fable does it — but the
 instruction is now in the path of the agent who has to act on it.
+
+**Update 3 — CLOSED (Fable, Phase 1).** The rule was MOVED, not copied: the single
+declaration is `severityOf` in `lib/pgx/evaluate.ts`; `scripts/verify-setup.mjs` imports
+it (dynamically, after its cache-existence check, so the missing-cache message still
+wins) and no longer contains a declaration —
+`grep -c 'function severityOf' scripts/verify-setup.mjs` → 0 and
+`grep -ci 'avoid' scripts/verify-setup.mjs` → 0. `npm run verify` runs under
+`node --import tsx` because plain node 20 cannot import `.ts` (see D7). Probe, per
+4a-bis: mutating `/avoid/i` → `/avo1d/i` in `evaluate.ts` made `npm run verify` report
+2 FAILURE(S); restoring returned it to PASS — therefore the preflight reads the same
+declaration `evaluate()` executes, and the pair can no longer silently disagree.
 
 ## R-6 · CLOSED · `data/patients.json` lookup strings were wrong — every alert silently failed
 
@@ -236,7 +247,7 @@ feedback endpoint.** The safe and true form is "the standard defines them and we
 implement them." Also unverified: any figure for US hospital Genomics Module adoption —
 none was found, treat any number heard as unsourced.
 
-## R-16 · OPEN (guard specified, not yet written) · neither CPIC key is unique; multi-gene guidelines flatten
+## R-16 · CLOSED (guard written and observed to fire) · neither CPIC key is unique; multi-gene guidelines flatten
 
 Surfaced while checking `BUILD_ORDER.md` Phase 0 against the real cache rather than
 against its own description. Both candidate join keys are one-to-many:
@@ -244,7 +255,7 @@ against its own description. Both candidate join keys are one-to-many:
 | key | distinct keys | matching >1 row | disagreeing on severity |
 |---|---|---|---|
 | `phenotype` | 609 | 274 | 105 |
-| `lookup` | 934 | 339 | 146 |
+| `lookup` | 940 | 345 | 152 |
 
 Cause: a multi-gene recommendation (amitriptyline is keyed on CYP2D6 **and** CYP2C19)
 becomes several rows under each single-gene key, differing by the *other* gene.
@@ -263,3 +274,71 @@ rule 4a-bis's vacuous instrument, which is how R-7 got caught.
 **Not fixed by widening the key.** Adding the second gene to the join would resolve
 amitriptyline and is the correct long-term model, but it changes `GeneResult` shape and
 every call site for a case no demo patient reaches. Recorded rather than built.
+
+**Update — CLOSED (Fable, Phase 1).** `evaluate()` implements the D6 guard: all rows
+for the (drug, gene, lookup) triple are collected; N rows must agree on derived
+severity AND recommendation text or no alert is raised and the conflict is logged.
+Observed to fire three ways in `tests/pgx.test.ts`: synthetic agreement still alerts
+(positive control), synthetic disagreement returns null AND logs (the log
+distinguishes "guard fired" from "join missed"), and a sweep of **331** real
+conflicting triples in the shipped cache — counted at runtime, asserted >100 so the
+sweep cannot silently go vacuous — through the real `evaluate()`/`getIndex()` returns
+null for every one with exactly one logged conflict each. The multi-gene join widening
+stays future work.
+
+## R-17 · OPEN · the per-phase lint gate is a FALSE GREEN — `next lint` does not exist in Next 16
+
+Surfaced at the Phase 1 gate. Sol independently hit the second half of this and filed
+`.sol/requests/phase1-sol-lint.md`; the first half is worse and neither of us was
+looking for it.
+
+**1. The gate command measures nothing and reports success.** `BUILD_ORDER.md` and
+`CLAUDE.md` ADAPTATION 4 both specify:
+
+```
+npx next lint | grep -cE "^(app|lib|components)/"
+```
+
+`next lint` was **removed from the Next 16 CLI** (`npx next --help` lists build, dev,
+info, start, telemetry, typegen, upgrade — no `lint`). So `next lint` parses `lint` as a
+directory and errors `Invalid project directory provided`. Piped into `grep -c`, that
+prints:
+
+```
+0
+```
+
+which is exactly what a clean lint run prints. **The gate cannot fail.** It is the
+vacuous-instrument defect of 4a-bis, in the file that defines the project's definition of
+done — and it is how R-7 was caught, so the shape is on record.
+
+**2. `npm run lint` crashes before linting anything.** ESLint 9 throws
+`TypeError: Converting circular structure to JSON` from `@eslint/eslintrc`'s
+config-validator while resolving `eslint.config.mjs`. Cause: that file wraps
+`next/core-web-vitals` and `next/typescript` in `FlatCompat`, but
+**`eslint-config-next@16.2.9` already ships flat configs** — verified:
+`require('eslint-config-next/dist/core-web-vitals.js')` is a flat config array of 4
+entries. Compat-wrapping an already-flat config is what closes the circle.
+
+**Fix (Fable owns `eslint.config.mjs` and `package.json`):** drop `FlatCompat` and spread
+the flat configs directly, then change the gate in both `BUILD_ORDER.md` and `CLAUDE.md`
+to invoke `eslint` and **assert on its exit code**, never on a piped grep count that a
+missing binary can satisfy.
+
+**Not fixed in this run deliberately:** Fable was mid-write on both files when this was
+found, and a concurrent edit to another party's file is the ownership violation the split
+exists to prevent. Handed to Fable with the diagnosis above.
+
+**Until it is fixed, no phase may be closed on lint evidence.** Report it as
+NOT MEASURED. Do not report it as clean.
+
+**Update — half CLOSED (Fable, Phase 1).** `eslint.config.mjs` now spreads
+`eslint-config-next/core-web-vitals` and `/typescript` directly (no FlatCompat);
+`npx eslint .` lints the repo and demonstrably reports findings, so the instrument can
+fail again. Two deliberate scoping notes: `react-hooks/rules-of-hooks` is off for
+`lib/**`, `scripts/**`, `tests/**` — it misread Sol's `useEphemeral` (a ledger state
+helper in non-React server code) as a React hook — and the one remaining finding
+(`prefer-const`, `lib/ledger/tamper.ts:76`) is in Sol-owned code, left to Sol.
+**Still open:** the gate text in `BUILD_ORDER.md` / `CLAUDE.md` still says
+`npx next lint | grep -c…`; neither file is Fable-owned, so the wording fix — assert on
+`npx eslint .`'s exit code, never a piped grep count — still needs its owner.

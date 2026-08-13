@@ -7,10 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "verify": "node scripts/verify-setup.mjs",
-    "test": "node --import tsx --test tests/*.test.ts",
+    "verify": "node --import tsx scripts/verify-setup.mjs",
+    "test": "node --import tsx --test --test-concurrency=1 tests/*.test.ts",
     "tamper": "tsx scripts/tamper.ts",
-    "verify:prove": "node scripts/verify-setup.mjs --prove",
+    "verify:prove": "node --import tsx scripts/verify-setup.mjs --prove",
     "removals": "sh scripts/check-removals.sh",
     "removals:prove": "sh scripts/check-removals.sh --prove",
     "typecheck": "tsc --noEmit"

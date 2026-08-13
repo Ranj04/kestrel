@@ -20,29 +20,6 @@ let failures = 0;
 
 const read = (p) => JSON.parse(readFileSync(p, "utf8"));
 
-/**
- * THE severity rule. Must stay character-identical to the one specified in
- * .sol/prompts/phase1-fable-engine.md and implemented in lib/pgx/evaluate.ts.
- *
- * REGISTER.md R-5: this is a second declaration of a closed set (rule 4a-ter,
- * vocabulary kind) -- mistype one and nothing fails to compile, the two simply
- * stop agreeing, and this preflight prints PASS while evaluate.ts disagrees
- * with it. THAT DEFEATS THE ENTIRE POINT OF THE PREFLIGHT.
- *
- * Fable closes this in Phase 1: export severityOf from lib/pgx/evaluate.ts and
- * import it here. Sol's review prompt flags it as a finding if that did not happen.
- */
-export function severityOf(text, classification) {
-  const t = String(text ?? "");
-  if (/avoid/i.test(t)) return "critical";
-  if (classification === "Strong" && /reduce|not recommended/i.test(t)) return "critical";
-  if (/no indication to change|label-recommended|standard dosing|no recommendation/i.test(t))
-    return "none";
-  return "caution";
-}
-
-
-
 // --- 4a-bis positive control -------------------------------------------------
 // `npm run verify -- --prove` corrupts one lookup in memory and asserts this
 // checker reports a FAILURE. A checker that cannot fail is not evidence of
@@ -60,6 +37,14 @@ if (!existsSync("data/cpic/index.json")) {
 }
 const index = read("data/cpic/index.json");
 ok(`data/cpic/index.json — ${Object.keys(index).length} drugs`);
+
+// R-5 CLOSED: the severity rule now lives in lib/pgx/evaluate.ts and ONLY
+// there — this preflight imports the same declaration evaluate() runs, so the
+// two can no longer silently disagree. Imported dynamically AFTER the cache
+// existence check above, because lib/pgx/index.ts throws at module load when
+// the cache is missing and the friendly message above must win. This import
+// needs the tsx loader: `npm run verify` is `node --import tsx` (package.json).
+const { severityOf } = await import("../lib/pgx/evaluate.ts");
 
 const { patients } = read("data/patients.json");
 ok(`data/patients.json — ${patients.length} patients`);
@@ -141,9 +126,8 @@ for (const pol of policyFile.policies) {
     const hit = entries.some(
       (e) => String(e.phenotype).trim().toLowerCase() === String(crit.phenotype).trim().toLowerCase(),
     );
-    hit
-      ? ok(`${c.clauseId} — ${crit.gene} "${crit.phenotype}"`)
-      : bad(`${c.clauseId}: "${crit.phenotype}" not a CPIC phenotype for ${crit.gene}/${drug}`);
+    if (hit) ok(`${c.clauseId} — ${crit.gene} "${crit.phenotype}"`);
+    else bad(`${c.clauseId}: "${crit.phenotype}" not a CPIC phenotype for ${crit.gene}/${drug}`);
   }
 }
 
@@ -160,12 +144,10 @@ const byPolicy = Object.fromEntries(
 const hitPolicies = Object.entries(byPolicy).filter(([, s]) => s.some((x) => affected.has(x)));
 const missPolicies = Object.entries(byPolicy).filter(([, s]) => !s.some((x) => affected.has(x)));
 
-hitPolicies.length
-  ? ok(`revision hits: ${hitPolicies.map(([id]) => id).join(", ")}`)
-  : bad("revision hits nothing — the superseded authorization will never appear");
-missPolicies.length
-  ? ok(`revision spares: ${missPolicies.map(([id]) => id).join(", ")}`)
-  : bad("revision hits EVERYTHING — nothing survives, so selective invalidation proves nothing");
+if (hitPolicies.length) ok(`revision hits: ${hitPolicies.map(([id]) => id).join(", ")}`);
+else bad("revision hits nothing — the superseded authorization will never appear");
+if (missPolicies.length) ok(`revision spares: ${missPolicies.map(([id]) => id).join(", ")}`);
+else bad("revision hits EVERYTHING — nothing survives, so selective invalidation proves nothing");
 
 // ------------------------------------------------------------------- done
 if (PROVE) {
