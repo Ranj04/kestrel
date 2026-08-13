@@ -13,8 +13,16 @@ Biopharma Hack Day, AWS Builder Loft, Aug 13 2026.
 npm install                      # ~60s
 python3 scripts/cache_cpic.py    # ~60s, stdlib only, no key. must end in PASS
 npm run verify                   # must end in PASS. do not skip this one
-npm run dev                      # http://localhost:3000
+npm run dev                      # http://localhost:3000 -- LEAVE IT RUNNING ONCE
 ```
+
+**That first `npm run dev` matters more than it looks.** `next/font/google` fetches
+Fraunces and IBM Plex Mono at build time. Run it once on good wifi and `.next` caches
+them; skip it and the fonts fetch when you can least afford it. The theme has a real
+fallback stack so a failure degrades the typeface rather than the layout, but warm it.
+
+If `npm test` errors with `bad option`, your Node is older than the runner expects —
+`nvm use` reads the committed `.nvmrc`.
 
 `npm run verify` is the one that matters. It cross-checks every genotype in
 `data/patients.json` against the CPIC cache and against every policy clause, and

@@ -4,7 +4,7 @@
 
 # SHARED CONTEXT — read this before every task
 
-You are one of two agents building **Attest** in `~/pgx` during a one-day hackathon.
+You are one of two agents building **Attest** in `~/"biopharma hack"` during a one-day hackathon.
 The other agent is working in parallel in the same repo right now. Your task prompt says which
 one you are. **Nobody is watching. Do not ask questions.** When something is ambiguous, pick the
 option that keeps the demo working, note it in a one-line comment, and keep moving. Finish the
@@ -12,6 +12,20 @@ whole task.
 
 There are roughly five hours between the start and the demo. Wall-clock is the binding constraint,
 not elegance.
+
+## THE REPO PATH CONTAINS A SPACE
+
+`~/biopharma hack`. Quote it in **every** shell command, every time:
+
+```sh
+cd ~/"biopharma hack"          # correct
+cd ~/biopharma hack            # runs `cd ~/biopharma` and silently succeeds elsewhere
+```
+
+Unquoted, it word-splits and your command runs in the wrong directory — and often
+*succeeds there*, which is the failure mode rule 4a-bis is about: a command producing
+no error while measuring nothing. `sh scripts/check-removals.sh` and `npm run verify`
+both resolve paths relative to cwd, so a bad `cd` makes them report on nothing.
 
 ## What we are building and why
 

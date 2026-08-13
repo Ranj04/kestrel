@@ -20,6 +20,28 @@ let failures = 0;
 
 const read = (p) => JSON.parse(readFileSync(p, "utf8"));
 
+/**
+ * THE severity rule. Must stay character-identical to the one specified in
+ * .sol/prompts/phase1-fable-engine.md and implemented in lib/pgx/evaluate.ts.
+ *
+ * REGISTER.md R-5: this is a second declaration of a closed set (rule 4a-ter,
+ * vocabulary kind) -- mistype one and nothing fails to compile, the two simply
+ * stop agreeing, and this preflight prints PASS while evaluate.ts disagrees
+ * with it. THAT DEFEATS THE ENTIRE POINT OF THE PREFLIGHT.
+ *
+ * Fable closes this in Phase 1: export severityOf from lib/pgx/evaluate.ts and
+ * import it here. Sol's review prompt flags it as a finding if that did not happen.
+ */
+export function severityOf(text, classification) {
+  const t = String(text ?? "");
+  if (/avoid/i.test(t)) return "critical";
+  if (classification === "Strong" && /reduce|not recommended/i.test(t)) return "critical";
+  if (/no indication to change|label-recommended|standard dosing|no recommendation/i.test(t))
+    return "none";
+  return "caution";
+}
+
+
 
 // --- 4a-bis positive control -------------------------------------------------
 // `npm run verify -- --prove` corrupts one lookup in memory and asserts this
@@ -82,11 +104,7 @@ for (const [pid, drug, gene, expect] of DEMO) {
   }
 
   const text = String(hit.recommendation ?? "");
-  const severity = /avoid/i.test(text)
-    ? "critical"
-    : /no indication to change|standard dosing|label-recommended/i.test(text)
-      ? "none"
-      : "caution";
+  const severity = severityOf(text, hit.classification);
 
   if (severity !== expect) {
     bad(`${pid} + ${drug}: expected ${expect}, derived ${severity}`);

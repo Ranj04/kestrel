@@ -4,7 +4,7 @@
 
 # TASK: phase2-sol-ui — the ledger pane, the signature modal, tamper, inspection package
 
-You are **Sol**. Read `~/pgx/.sol/prompts/_context.md` FIRST, then `~/pgx/lib/contracts.ts`.
+You are **Sol**. Read `~/"biopharma hack"/.sol/prompts/_context.md` FIRST, then `~/"biopharma hack"/lib/contracts.ts`.
 
 Phase 1 gave you a chain that provably detects tampering. This task makes that visible from twenty
 feet, in under fifteen seconds, to someone who has never heard of 21 CFR Part 11.

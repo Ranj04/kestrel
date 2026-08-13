@@ -4,7 +4,7 @@
 
 # TASK: phase1-fable-engine — contracts, PGx engine, patients, prescribe API
 
-You are **Fable**. Read `~/pgx/.sol/prompts/_context.md` FIRST. It defines the project, your
+You are **Fable**. Read `~/"biopharma hack"/.sol/prompts/_context.md` FIRST. It defines the project, your
 directory ownership, and the standing rules. Everything below assumes it.
 
 **Deliverable 1 is `lib/contracts.ts` and it is urgent.** Sol is blocked until it exists. Write it
@@ -15,147 +15,23 @@ No UI in this task. Phase 1 ends with a working API you can hit with `curl`.
 
 ---
 
-## Deliverable 1 — `lib/contracts.ts`
+## Deliverable 1 — `lib/contracts.ts` is ALREADY WRITTEN. Do not rewrite it.
 
-Write this verbatim. Sol is coding against it right now.
+`lib/contracts.ts` exists in the repo, complete and frozen. **Read the file. Do not
+work from any prose restatement of it, including one in a prompt.** An earlier draft of
+this prompt carried an inline copy and it had already drifted from the real file
+(`evidence.superseded` vs `policy.revised`) — which is rule 4a-ter's vocabulary case
+exactly: two declarations of a closed set, both syntactically fine, silently disagreeing.
+The copy is deleted rather than corrected, because a corrected copy drifts again.
 
-```ts
-export type Severity = "none" | "caution" | "critical";
-export type RiskLevel = "low" | "medium" | "high";
+Skim it for: `Alert` (every string verbatim from CPIC), `Coverage`,
+`EvidenceSnapshot` (bound to BOTH the CPIC entry and the policy clause),
+`PrescribeResponse` (note `coverage` sits here **as well as** on `Alert` — two of the
+four demo patients have no alert and their coverage must still render), `Credibility`,
+and the ledger types.
 
-export interface GeneResult {
-  gene: string;          // "DPYD"
-  diplotype: string;     // "c.1905+1G>A/c.1679T>G"
-  lookup: string;        // "Poor Metabolizer" — MUST match CPIC's lookupkey value
-  source: string;        // "PharmCAT v3.2.0 (synthetic VCF)"
-  reportedAt: string;    // ISO
-}
-
-export interface Patient {
-  patientId: string;
-  displayName: string;
-  mrn: string;
-  age: number;
-  sex: string;
-  indication: string;    // "Stage III colorectal adenocarcinoma"
-  results: GeneResult[];
-}
-
-export interface Order {
-  orderId: string;
-  patientId: string;
-  drugRaw: string;       // what the prescriber typed
-  drugName: string;      // resolved CPIC drug name
-  dose: string | null;
-  route: string | null;
-  orderedBy: string;
-  orderedAt: string;
-}
-
-export interface Citation { pmid: string; title: string; year: number; }
-
-/** Every string field here is VERBATIM from data/cpic/index.json. Never model-generated. */
-export interface Alert {
-  alertId: string;
-  orderId: string;
-  gene: string;
-  diplotype: string;
-  lookup: string;
-  drugName: string;
-  severity: Severity;
-  recommendation: string;
-  implication: string | null;
-  classification: string | null;   // "Strong" | "Moderate" | "Optional" | "No Recommendation"
-  comments: string | null;
-  population: string | null;
-  cpicLevelA: boolean;
-  guidelineName: string | null;
-  guidelineUrl: string | null;
-  citations: Citation[];
-  sourceUrl: string;               // the exact CPIC API row URL this came from
-  snapshot: EvidenceSnapshot;      // what an override against this alert gets bound to
-  raisedAt: string;
-}
-
-/** Snapshot binding, ported from writ.ai at depth one.
- *  An override is authorized against the evidence as it stood the moment it was signed.
- *  If that evidence is later superseded, the authorization goes stale on its own. */
-export interface EvidenceSnapshot {
-  snapshotId: string;          // "cpic:DPYD:capecitabine:2017"
-  entryHash: string;           // stableHash() of the exact CPIC index entry
-  guidelineName: string | null;
-  scopes: string[];            // ["dosing.capecitabine", "monitoring.dpd"]
-  capturedAt: string;
-}
-
-export type AuthorizationStatus = "valid" | "superseded" | "needs-review";
-
-/** FDA draft guidance: risk = model influence x decision consequence. */
-export interface Credibility {
-  contextOfUse: string;
-  modelInfluence: RiskLevel;
-  decisionConsequence: RiskLevel;
-  risk: RiskLevel;
-  requiredControl: "auto" | "human-review" | "human-signature";
-  rationale: string;
-}
-
-export interface PrescribeResponse {
-  order: Order;
-  alert: Alert | null;
-  credibility: Credibility;
-  resolution: {
-    matched: boolean;
-    method: "exact" | "llm" | "none";
-    candidates: string[];
-  };
-}
-
-export type LedgerEventType =
-  | "order.placed"
-  | "genotype.resolved"
-  | "alert.raised"
-  | "alert.accepted"
-  | "alert.overridden"
-  | "model.invoked"
-  | "evidence.superseded"
-  | "export.generated";
-
-export interface Actor { id: string; name: string; role: string; }
-
-export interface ModelProvenance {
-  id: string;
-  version: string;
-  params: Record<string, unknown>;
-  prompt: string;
-  rawOutput: string;   // ALCOA "Original" — the UNEDITED output, kept separately
-}
-
-export interface LedgerRecord {
-  seq: number;
-  recordId: string;
-  type: LedgerEventType;
-  occurredAt: string;
-  actor: Actor;
-  payload: unknown;
-  model?: ModelProvenance;
-  clauses: string[];
-  prevHash: string;
-  hash: string;
-}
-
-export interface VerifyResult {
-  ok: boolean;
-  total: number;
-  firstBrokenSeq: number | null;
-  brokenSeqs: number[];   // firstBroken and everything after it
-  checkedAt: string;
-}
-```
-
-Commit this immediately so Sol can pull it.
-
----
+**Adding a field is safe. Renaming or removing one is not.** If you need that, write
+`.sol/requests/<task>.md` and keep moving.
 
 ## Deliverable 2 — `data/patients.json`
 

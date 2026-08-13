@@ -4,10 +4,10 @@
 
 # TASK: phase1-sol-ledger — hash-chained audit ledger, verification, tamper
 
-You are **Sol**. Read `~/pgx/.sol/prompts/_context.md` FIRST. It defines the project, your
+You are **Sol**. Read `~/"biopharma hack"/.sol/prompts/_context.md` FIRST. It defines the project, your
 directory ownership, and the standing rules. Everything below assumes it.
 
-Also read `~/pgx/lib/contracts.ts` — Fable writes it in the first ten minutes and then freezes it.
+Also read `~/"biopharma hack"/lib/contracts.ts` — Fable writes it in the first ten minutes and then freezes it.
 `LedgerRecord`, `VerifyResult`, `Actor`, and `ModelProvenance` are yours to implement against.
 **If it does not exist yet, do not wait.** Copy the type declarations out of Fable's Phase 1
 prompt (`.sol/prompts/phase1-fable-engine.md`, Deliverable 1) into your head, build against them,
@@ -34,11 +34,14 @@ in the product. Write this carefully and test it hard.
 
 ### `hashRecord(record): string`
 
+Already implemented and tested in `lib/ledger/hash.ts` — **do not rewrite it.**
 SHA-256 hex of `canonicalJson({ seq, recordId, type, occurredAt, actor, payload, model, clauses, prevHash })`.
 
 `hash` is **excluded** from its own input. Node's built-in `crypto` — no dependency.
 
-Genesis `prevHash` is `"0".repeat(64)`.
+Genesis `prevHash` is the exported `GENESIS_PREV_HASH` = `"sha256:" + "0".repeat(64)`.
+The `sha256:` prefix is part of it (writ.ai does the same, so a digest is
+self-describing in the UI). Import the constant; do not retype the literal.
 
 ---
 
@@ -82,6 +85,7 @@ real; the deployed link is a convenience.
 | `alert.raised` | `21CFR11.10(e)`, `ALCOA+:Accurate`, `ALCOA+:Traceable` |
 | `alert.accepted` | `21CFR11.10(e)`, `ALCOA+:Attributable` |
 | `alert.overridden` | `21CFR11.50`, `21CFR11.70`, `ALCOA+:Attributable`, `ALCOA+:Enduring` |
+| `policy.revised` | `21CFR11.10(k)(2)`, `ALCOA+:Traceable`, `ALCOA+:Enduring` |
 | `export.generated` | `21CFR11.10(b)` |
 
 Also export a human-readable label for each tag — the UI renders

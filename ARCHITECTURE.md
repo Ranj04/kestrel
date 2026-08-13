@@ -201,7 +201,9 @@ Three things that will silently break it:
    that ruins the demo — the chain shows red before anyone tampers with anything. Sol's Phase 1
    acceptance test exists specifically to catch it.
 2. **`hash` itself is excluded from the hashed payload.** Obvious, easy to get wrong.
-3. **Genesis record has `prevHash = "0".repeat(64)`.**
+3. **Genesis record has `prevHash = GENESIS_PREV_HASH` from `lib/ledger/hash.ts`,
+   which is `"sha256:" + "0".repeat(64)` — the prefix is part of it. Import the constant;
+   do not retype the literal.**
 
 `verify()` walks the file from record 0 and returns the **first** broken index plus every index
 after it, so the UI can render "record 4 tampered, records 4–9 no longer trustworthy" rather than
@@ -221,6 +223,7 @@ like a compliance artifact instead of a log viewer.
 | `model.invoked` | `21CFR11.10(e)`, `ALCOA+:Original`, `FDA-AI:model-provenance` |
 | `alert.raised` | `21CFR11.10(e)`, `ALCOA+:Accurate`, `ALCOA+:Traceable` |
 | `alert.overridden` | `21CFR11.50`, `21CFR11.70`, `ALCOA+:Attributable`, `ALCOA+:Enduring` |
+| `policy.revised` | `21CFR11.10(k)(2)` revision/change control, `ALCOA+:Traceable`, `ALCOA+:Enduring` |
 | `export.generated` | `21CFR11.10(b)` |
 
 `model.invoked` records the model id, version, full params, the exact prompt, and the **raw
@@ -250,7 +253,7 @@ the app is complete and demoable without it.**
 
 ## 10. Demo state to have ready before you start building
 
-Three synthetic patients in `data/patients.json`. **Do not invent diplotypes — copy the exact
+**Four** synthetic patients in `data/patients.json`. **Do not invent diplotypes — copy the exact
 `lookup` strings from `data/cpic/index.json` or nothing will match.**
 
 | Patient | Genotype | Demo role |
@@ -258,6 +261,7 @@ Three synthetic patients in `data/patients.json`. **Do not invent diplotypes —
 | Maya Okafor, 61F | DPYD Poor Metabolizer | **the money shot.** capecitabine → avoid |
 | Daniel Reyes, 34M | CYP2D6 Ultrarapid | codeine → avoid. proves it's not one hardcoded case |
 | Ana Lindqvist, 47F | DPYD Normal Metabolizer | prescribe capecitabine → **no alert.** proves it isn't a red screen generator |
+| Ravi Bhattacharya, 58M | none on file | capecitabine → coverage `pended`. the most common real prior-auth outcome |
 
 That third patient matters more than it looks. A demo that always alarms is a demo that always
 alarms. Showing a clean pass first, then the same drug on a different patient going red, is what

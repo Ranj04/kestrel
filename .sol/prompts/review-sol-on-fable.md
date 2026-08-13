@@ -4,10 +4,10 @@
 
 # TASK: review-sol-on-fable — attack the clinical correctness
 
-You are **Sol**. Read `~/pgx/.sol/prompts/_context.md` first.
+You are **Sol**. Read `~/"biopharma hack"/.sol/prompts/_context.md` first.
 
 **This is a review task. Do not edit any file.** Write findings only, to
-`~/pgx/.sol/reviews/sol-on-fable.md`. That is the single file you may create.
+`~/"biopharma hack"/.sol/reviews/sol-on-fable.md`. That is the single file you may create.
 
 You have roughly fifteen minutes. Depth over coverage.
 

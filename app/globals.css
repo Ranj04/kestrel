@@ -27,12 +27,16 @@
   --color-amber: var(--amber);
   --color-void: var(--void);
   --font-display: var(--font-fraunces);
-  --font-mono: var(--font-plex-mono);
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 body {
   color: var(--ink);
-  font-family: var(--font-fraunces), Georgia, serif;
+  /* next/font/google fetches at BUILD time. Warm it with one `npm run dev` on
+     good wifi before the event -- .next caches it and the demo then needs no
+     network. These fallbacks are what you actually get if that never happened:
+     the layout holds and only the typeface changes. Never a blank screen. */
+  font-family: var(--font-fraunces), Iowan Old Style, Palatino, Georgia, serif;
   background-color: var(--paper);
   background-image: repeating-linear-gradient(
     to bottom,

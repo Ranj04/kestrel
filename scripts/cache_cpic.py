@@ -83,8 +83,12 @@ def build_index(data):
 
 
 def find(index, drug, gene, term):
+    """EXACT match, deliberately. A substring match would let "Ultrarapid" pass
+    while telling you nothing about "Ultrarapid Metabolizer" in patients.json --
+    so this PASS would be weaker than `npm run verify`'s PASS, and a weaker check
+    reported in the same word is exactly the failure rule 4a-bis exists to stop."""
     for a in index.get(drug.lower(), {}).get(gene, []):
-        if term.lower() in str(a["lookup"]).lower():
+        if str(a["lookup"]).strip().lower() == term.strip().lower():
             return a
     return None
 
@@ -107,8 +111,8 @@ def main():
     print("\nself-test")
     checks = [
         ("capecitabine", "DPYD", "Poor Metabolizer", "avoid"),
-        ("codeine", "CYP2D6", "Ultrarapid", "avoid"),
-        ("abacavir", "HLA-B", "positive", None),
+        ("codeine", "CYP2D6", "Ultrarapid Metabolizer", "avoid"),
+        ("abacavir", "HLA-B", "*57:01 positive", None),
     ]
     ok = True
     for drug, gene, term, expect in checks:

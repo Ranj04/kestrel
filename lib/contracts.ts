@@ -121,6 +121,10 @@ export interface Credibility {
 export interface PrescribeResponse {
   order: Order;
   alert: Alert | null;
+  /** ALSO here, not only on Alert. Two of the four demo patients have NO alert
+   *  (Lindqvist covered, Bhattacharya pended) and their coverage determination
+   *  must still render. Alert.coverage is the copy shown inside the alert card. */
+  coverage: Coverage | null;
   credibility: Credibility;
   resolution: {
     matched: boolean;

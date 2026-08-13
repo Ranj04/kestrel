@@ -4,8 +4,8 @@
 
 # TASK: phase2-fable-ui — the prescriber pane, the alert, the Why? drawer
 
-You are **Fable**. Read `~/pgx/.sol/prompts/_context.md` FIRST, then
-`~/pgx/.sol/requests/` — Sol may have filed something for you.
+You are **Fable**. Read `~/"biopharma hack"/.sol/prompts/_context.md` FIRST, then
+`~/"biopharma hack"/.sol/requests/` — Sol may have filed something for you.
 
 Phase 1 gave you a working API. This task makes it something a room can watch from twenty feet.
 

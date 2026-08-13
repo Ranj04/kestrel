@@ -4,10 +4,10 @@
 
 # TASK: review-fable-on-sol — try to defeat the chain
 
-You are **Fable**. Read `~/pgx/.sol/prompts/_context.md` first.
+You are **Fable**. Read `~/"biopharma hack"/.sol/prompts/_context.md` first.
 
 **This is a review task. Do not edit any file.** Write findings only, to
-`~/pgx/.sol/reviews/fable-on-sol.md`. That is the single file you may create.
+`~/"biopharma hack"/.sol/reviews/fable-on-sol.md`. That is the single file you may create.
 
 You have roughly fifteen minutes. Depth over coverage.
 

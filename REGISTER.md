@@ -52,10 +52,18 @@ a PR. This project has none. Replacement gate in `CLAUDE.md` ADAPTATION 4;
 project-specific evidence table in ADAPTATION 3. **The standard is unchanged — only the
 artifact table is.** No claim is downgraded to "probably fine."
 
-## R-5 · OPEN, and it is a rule-4a-ter violation of the vocabulary kind
+## R-5 · OPEN (content reconciled, duplication remains) · two severity implementations
 
-`scripts/verify-setup.mjs` derives severity with its own regex
-(`/avoid/i` → critical, etc.). `lib/pgx/evaluate.ts` will implement the same rule
+**Update:** an independent audit found the two copies did not merely duplicate, they
+**disagreed** — the preflight tested `/avoid/i` only, while the spec adds
+`classification === "Strong"` + `"reduce"`/`"not recommended"`. So `npm run verify`
+could print PASS while `evaluate.ts` classified differently, which defeats the entire
+point of the preflight. The rule text is now identical in both, extracted as an exported
+`severityOf(text, classification)`.
+
+**Still open, because identical-today is not the same as single-source.**
+
+`scripts/verify-setup.mjs` derives severity with its own copy of the rule. `lib/pgx/evaluate.ts` will implement the same rule
 independently. **That is two declarations of a closed set that can disagree while both
 still run** — mistype one and nothing fails to compile, the two simply stop agreeing.
 Exactly the discriminator in 4a-ter clause 1.
@@ -104,3 +112,67 @@ noise in an instrument whose whole value is that its output is unambiguous.
 **Fix:** write the backup outside the repo (`/tmp`) rather than alongside the file.
 Not done now: it costs a line and the demo clock is the binding constraint. Recorded so
 it is not mistaken for a real finding when someone runs `--prove` later.
+
+---
+
+## R-9 · CLOSED · `PrescribeResponse` had no `coverage`, so two of four demo patients could not render one
+
+`Coverage` hung only off `Alert.coverage`, but `evaluate()` returns `null` when severity
+is `none`. Lindqvist (`covered · PA-ONC-014.4`) and Bhattacharya (`pended ·
+PA-ONC-014.1`) therefore had no path to the screen — and Bhattacharya's `pended` is a row
+in the README demo table *and* phase0 acceptance test #4.
+
+**Fixed additively** (legal under the freeze rule): `coverage: Coverage | null` added to
+`PrescribeResponse`. `Alert.coverage` stays as the copy rendered inside the alert card.
+
+Found by an independent audit of the tree, not by review of the prompts. Neither the
+prompts nor the contract read wrong on their own — the gap was between them.
+
+## R-10 · CLOSED · three separate copies of the contract had drifted
+
+1. `phase2b-sol-snapshot.md` told Sol to log `evidence.superseded`; `contracts.ts` has
+   `policy.revised`. Sol would have hit a type error around 2pm, on the differentiator
+   feature, with no slack.
+2. `phase1-fable-engine.md` carried an **inline restatement of the whole of
+   `contracts.ts`**, and that copy had already drifted the same way.
+3. `phase2b`'s `authorizationStatus()` return omitted `authorizationId`, `drugName` and
+   `actor`; its `supersededBy` was `{pmid,title,year}` against contracts'
+   `{policyId,version,summary}`; and `SupersedeInput` predated phase0 moving the
+   supersede trigger from a guideline revision to a policy revision.
+
+**Fixed by deletion, not correction.** The inline copy in phase1 is gone and replaced
+with "read the file." A corrected copy drifts again — this is rule 4a-ter's vocabulary
+case, and the file is on an importable path, so the second copy was never legitimate.
+
+## R-11 · CLOSED · `cache_cpic.py` PASS was weaker than `npm run verify` PASS
+
+`find()` substring-matched, so `"Ultrarapid"` passed while telling you nothing about
+`"Ultrarapid Metabolizer"` in `patients.json`. Two checks reporting success in the same
+word while measuring different strictness is the failure 4a-bis names. Now exact-match,
+and the self-test uses full lookup strings.
+
+## R-12 · CLOSED · `npm test` could not execute
+
+`--experimental-strip-types` requires Node 22.6+; the active runtime was 20.19.6, so the
+script failed with `bad option` — "the test that saves the demo" did not run at all.
+Switched to `node --import tsx --test`, which works on 20.6+ and needs only the `tsx`
+devDependency that `npm install` already brings. `.nvmrc` (24) kept as belt-and-braces.
+
+**Verified on Node 22 only** — the 20.6+ claim is from the `--import` flag's documented
+availability, not from a run. Stated per rule 4g rather than asserted.
+
+## R-13 · CLOSED · every prompt pointed at `~/pgx`; the repo is `~/biopharma hack`
+
+14 references across the prompts and `ARCHITECTURE.md`. Both agents would have failed on
+instruction one. Rewritten to `~/"biopharma hack"` — quoted, because the space is a live
+hazard: unquoted, `cd ~/biopharma hack` runs `cd ~/biopharma` and often **succeeds
+elsewhere**, which makes every subsequent check report on nothing. Warning added to
+`_context.md`.
+
+## R-14 · OPEN · `next/font/google` fetches at build time
+
+Violates "no network at runtime" if `.next` was never warmed. Mitigated two ways: a real
+fallback stack in `globals.css` (a failure changes the typeface, never the layout), and
+an explicit warm step in the README. **Not fully fixed** — self-hosting the two fonts
+would close it properly and costs ~10 minutes. Recorded rather than done, because the
+mitigation is adequate and the clock is not.

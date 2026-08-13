@@ -4,7 +4,7 @@
 
 # TASK: phase2b-sol-snapshot — snapshot-bound overrides and selective invalidation
 
-You are **Sol**. Read `~/pgx/.sol/prompts/_context.md` FIRST, then `~/pgx/lib/contracts.ts`.
+You are **Sol**. Read `~/"biopharma hack"/.sol/prompts/_context.md` FIRST, then `~/"biopharma hack"/lib/contracts.ts`.
 
 **This is the differentiator. Everything before it was table stakes.** If you are behind schedule,
 cut polish anywhere else and build this.
@@ -29,30 +29,31 @@ That one line is why the capecitabine override dies and the codeine override liv
 ## Deliverable 1 — `lib/ledger/snapshot.ts`
 
 ```ts
+/** These fields ARE the `revision` block in data/policies.json. Read the file;
+ *  do not re-invent the shape. Phase0 moved the supersede trigger from a CPIC
+ *  guideline revision to a POLICY revision — payers revise constantly, guidelines
+ *  rarely — and this prompt was written before that. The FILE is the source of truth. */
 export interface SupersedeInput {
-  gene: string;
-  drugName: string;
-  affectedScopes: string[];
-  newGuidelineName: string;
-  newCitation: { pmid: string; title: string; year: number };
-  summary: string;      // one line, shown on screen
+  policyId: string;         // "PA-ONC-014"
+  clauseId: string;         // "PA-ONC-014.2"
+  newVersion: string;       // "2024.2"
+  affectedScopes: string[]; // ["dosing.capecitabine"]
+  summary: string;
 }
 
-/** Mutate the in-memory CPIC entry, recompute its hash, log evidence.superseded. */
+/** Bump the policy version in memory, recompute affected snapshot hashes,
+ *  log a `policy.revised` record. */
 export function supersede(input: SupersedeInput): {
-  snapshotIdBefore: string; entryHashBefore: string;
-  entryHashAfter: string; record: LedgerRecord;
+  policyId: string; versionBefore: string; versionAfter: string;
+  entryHashBefore: string; entryHashAfter: string;
+  record: LedgerRecord;
 };
 
-/** For every alert.overridden record: is its bound snapshot still current? */
-export function authorizationStatus(): Array<{
-  seq: number; alertId: string;
-  status: AuthorizationStatus;
-  boundTo: EvidenceSnapshot;
-  currentEntryHash: string;
-  intersectingScopes: string[];
-  supersededBy: { pmid: string; title: string; year: number } | null;
-}>;
+/** Returns AuthorizationView[] EXACTLY as declared in lib/contracts.ts.
+ *  It requires authorizationId, drugName and actor in addition to the status
+ *  fields, and supersededBy is { policyId, version, summary } | null.
+ *  READ THE INTERFACE. Where it and this prompt disagree, contracts.ts wins. */
+export function authorizationStatus(): AuthorizationView[];
 ```
 
 `supersede` edits the entry **in memory only** — never write to `data/cpic/index.json`. That file
@@ -73,20 +74,23 @@ Status rules:
 
 ## Deliverable 2 — `POST /api/evidence/supersede`
 
-One canned change, hardcoded, no parameters needed to fire it:
+One canned change, no parameters needed to fire it. **Read it from
+`data/policies.json`'s `revision` block — do not hardcode a copy in your source.**
+A second copy of a closed set is rule 4a-ter's vocabulary case: mistype one and nothing
+fails to compile, the two simply stop agreeing.
 
-```
-gene: "DPYD", drugName: "capecitabine"
-affectedScopes: ["dosing.capecitabine"]
-newGuidelineName: "DPYD and Fluoropyrimidines (2024 revision)"
-summary: "Revised starting-dose guidance for DPYD poor metabolizers."
+```jsonc
+"revision": {
+  "policyId": "PA-ONC-014", "clauseId": "PA-ONC-014.2", "newVersion": "2024.2",
+  "affectedScopes": ["dosing.capecitabine"],
+  "summary": "Reduced-dose authorization now additionally requires documented DPD
+              phenotype testing, not genotype alone."
+}
 ```
 
-Use a **real** newer DPYD publication if you can find one already sitting in
-`data/cpic/index.json`'s citations for that entry; otherwise mark the citation
-`"SIMULATED — demo guideline revision"` in the payload and render that label on screen.
-**Never present a fabricated publication as real.** The standing rule about fabricated clinical
-content applies to citations too.
+That block's `note` field already states it is a simulated revision. **Render that label
+on screen.** Never present a simulated policy revision as a real one — the standing rule
+about fabricated clinical content covers policy language too.
 
 `GET /api/ledger` gains an `authorizations` field from `authorizationStatus()`.
 
@@ -98,13 +102,13 @@ Above the record stream. One row per override:
 AUTHORIZATIONS
 
 ⛔ AUTH-4F2C  capecitabine · dr_chen                          SUPERSEDED
-   bound to  cpic:DPYD:capecitabine:2017   sha256 4a91…
-   current   cpic:DPYD:capecitabine:2024   sha256 77bc…
+   bound to  PA-ONC-014 v2024.1             sha256 4a91…
+   current   PA-ONC-014 v2024.2             sha256 77bc…
    scope collision: dosing.capecitabine
-   superseded by PMID 29152729 · CPIC DPYD guideline, 2024 revision
+   superseded by PA-ONC-014 v2024.2 · clause PA-ONC-014.2 (simulated)
 
 ✓  AUTH-91BE  codeine · dr_chen                               VALID
-   bound to  cpic:CYP2D6:codeine:2021      sha256 c81d…
+   bound to  PA-PAIN-007 v2023.4            sha256 c81d…
    evidence changed elsewhere; no scope collision with dosing.capecitabine
 ```
 
@@ -112,7 +116,7 @@ The second row is the demo. Both overrides were signed. One died, one lived, and
 the reason. **Do not cut the second row to save time** — a panel showing only the superseded
 authorization proves nothing beyond "we set a flag."
 
-Add a **Publish CPIC revision** button next to Tamper. Different colour from Tamper: tampering is
+Add a **Publish policy revision** button next to Tamper. Different colour from Tamper: tampering is
 an attack, superseding is *normal life*, and conflating them muddles the point.
 
 ## Why this beats the tamper demo — say this on stage
@@ -129,12 +133,12 @@ Every audit system on the market answers the first. Almost none answer the secon
 
 1. Override capecitabine for Okafor, sign → `AUTH-… VALID`
 2. Override codeine for Reyes, sign → second `AUTH-… VALID`
-3. **Publish CPIC revision** → capecitabine `SUPERSEDED` with the scope collision named;
+3. **Publish policy revision** → capecitabine `SUPERSEDED` with the scope collision named;
    **codeine still VALID with the no-collision reason shown**
 4. The hash chain stays **green** throughout — superseding is not tampering, and if the chain goes
    red here you have written to the ledger's past instead of appending to its future. That is a
    severity-1 bug.
-5. `data/cpic/index.json` on disk is **byte-identical** before and after. Check with `md5`.
+5. `data/cpic/index.json` and `data/policies.json` on disk are **byte-identical** before and after. Check with `md5`.
 6. Export the inspection package → the superseded authorization and its reason appear in the HTML
 
 Step 4 is the one to watch. Two different red states that mean different things is the whole
