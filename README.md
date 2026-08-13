@@ -75,6 +75,19 @@ start at the same moment. Full order in `.sol/README.md`.
 - `app/globals.css` — the case-file theme, carried over from Paperwork Advocate
 - `scripts/verify-setup.mjs` — the preflight
 
+## "How does this connect to a hospital's database?"
+
+It doesn't — and `docs/INTEGRATION.md` is the answer. The EHR calls **you**, via HL7
+**CDS Hooks `order-sign`**, whose own spec calls it *"the last point at which the CDS
+Service can influence."* Genotype arrives as FHIR Observations with real LOINC codes.
+And the spec has a normative field called **`overrideReasons`** — our override modal,
+already standardized, with a feedback endpoint that returns actor, reason, comment and
+timestamp. That is a §11.50 signature manifestation arriving over a public standard.
+
+The strongest thing in that document is the gap, not the plumbing: **most PGx results
+are still unstructured PDFs** — 627 discrete results against ~21,500 documents at Penn,
+published. The integration is solved. The data isn't.
+
 ## What's not
 
 Everything under `lib/pgx/`, `lib/export/`, `app/api/`, and `components/`. That's

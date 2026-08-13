@@ -37,10 +37,17 @@ the abstract, accessibility, or anything `DECISIONS.md` explicitly justifies.
 
 **`lib/pgx/evaluate.ts` is the instrument.** Every clinical claim comes out of it. Attack:
 
-- **Can it ever match the wrong `lookup`?** Substring matching, `includes`, case folding, or
-  trimming that lets `"Normal Metabolizer"` match an entry meant for `"Poor Metabolizer"` — or
-  worse, the reverse. Try `"Intermediate Metabolizer"` against every entry for capecitabine. If
-  the match is not effectively exact after normalization, that is a severity-1 finding.
+- **Does it join on `lookup` or on `phenotype`?** It must be `lookup`. Joining on `phenotype` is
+  a severity-1 finding: it is `null` for every HLA gene, and it is not unique — DPYD `"0.0"` and
+  `"0.5"` are both `"Poor Metabolizer"`, so a phenotype join can return a different row than the
+  one the patient's genotype actually maps to.
+- **Can it ever match the wrong `lookup`?** Substring matching, `includes`, or numeric coercion
+  that lets `"2.0"` match `"2.5"`, `"≥2.0"`, or `"0.0"` — the DPYD/CYP2D6 keys are activity-score
+  *strings* and several are prefixes of each other (`"3.0"`, `"≥3.0"`, `"≥3.25"`). Try `"0.5"` and
+  `"≥3.0"` against every capecitabine and codeine entry. If the match is not exact after trim and
+  case-fold, that is a severity-1 finding.
+- **Is `lookup` ever rendered to the user?** It is a join key. A card reading "DPYD 0.0" instead
+  of "DPYD Poor Metabolizer" is a finding.
 - **Can it raise an alert for a gene the patient does not have a result for?**
 - **Can it return `null` when a real Level A alert exists?** A false negative here is the demo's
   worst failure — it is a system that silently misses the thing it is for.
@@ -108,11 +115,16 @@ Audit against these by name, not "the diff":
 ## Rule 1 — the precondition that kills the tempting option
 
 The tempting fix for a non-firing alert is to loosen the `lookup` match — substring,
-fuzzy, normalized. **Check `data/cpic/index.json` for near-miss strings on the same
-gene before proposing it, and never loosen the match to make something pass.** DPYD
-carries "Normal Metabolizer", "Intermediate Metabolizer" and "Poor Metabolizer" on the
-same drug; any match loose enough to be forgiving is loose enough to return the
-opposite recommendation. That is the worst defect available in this codebase.
+fuzzy, normalized, parsed-as-a-number. **Check `data/cpic/index.json` for near-miss strings on the
+same gene before proposing it, and never loosen the match to make something pass.** For
+capecitabine, DPYD carries `"0.0"`, `"0.5"`, `"1.0"`, `"1.5"` and `"2.0"` on one drug, spanning
+Poor to Normal Metabolizer; codeine carries `"3.0"` alongside `"≥3.0"` and `"≥3.25"`. Any match
+loose enough to be forgiving is loose enough to return the opposite recommendation. That is the
+worst defect available in this codebase.
+
+**This already happened once.** `patients.json` shipped with `lookup: "Poor Metabolizer"` — a
+phenotype name where an activity score belongs — and every alert silently failed to fire. The
+correct fix was to fix the data, not to loosen the match. Watch for anyone who did the latter.
 
 ## R-5 is open and it is yours to close
 

@@ -253,14 +253,19 @@ the app is complete and demoable without it.**
 
 ## 10. Demo state to have ready before you start building
 
-**Four** synthetic patients in `data/patients.json`. **Do not invent diplotypes — copy the exact
-`lookup` strings from `data/cpic/index.json` or nothing will match.**
+**Four** synthetic patients in `data/patients.json`, already written and verified against the
+cache. **Do not invent diplotypes or lookups — copy them from a row in CPIC's `diplotype` table.**
 
-| Patient | Genotype | Demo role |
+`lookup` is CPIC's join key and it is an **activity score**, not a phenotype name. Writing
+`"Poor Metabolizer"` there matches nothing, and it fails *silently* — no error, no warning, the
+alert simply never fires. That is not hypothetical: it is what this file originally shipped with,
+and `npm run verify` is what caught it. Render `phenotype`; join on `lookup`.
+
+| Patient | `lookup` → displayed as | Demo role |
 |---|---|---|
-| Maya Okafor, 61F | DPYD Poor Metabolizer | **the money shot.** capecitabine → avoid |
-| Daniel Reyes, 34M | CYP2D6 Ultrarapid | codeine → avoid. proves it's not one hardcoded case |
-| Ana Lindqvist, 47F | DPYD Normal Metabolizer | prescribe capecitabine → **no alert.** proves it isn't a red screen generator |
+| Maya Okafor, 61F | DPYD `"0.0"` → Poor Metabolizer | **the money shot.** capecitabine → avoid |
+| Daniel Reyes, 34M | CYP2D6 `"3.0"` → Ultrarapid Metabolizer | codeine → avoid. proves it's not one hardcoded case |
+| Ana Lindqvist, 47F | DPYD `"2.0"` → Normal Metabolizer | prescribe capecitabine → **no alert.** proves it isn't a red screen generator |
 | Ravi Bhattacharya, 58M | none on file | capecitabine → coverage `pended`. the most common real prior-auth outcome |
 
 That third patient matters more than it looks. A demo that always alarms is a demo that always

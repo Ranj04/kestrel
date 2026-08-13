@@ -14,9 +14,23 @@
 
 export interface GeneResult {
   gene: string; // "DPYD"
-  diplotype: string; // "c.1905+1G>A/c.1679T>G"
-  /** MUST match CPIC's `lookup` value character for character, or nothing fires. */
-  lookup: string; // "Poor Metabolizer"
+  /** Verbatim from CPIC's diplotype table, including the allele annotation. */
+  diplotype: string; // "c.1905+1G>A (*2A)/c.1905+1G>A (*2A)"
+  /**
+   * THE JOIN KEY. Must equal a CPIC `lookup` character for character or nothing
+   * fires. Its SHAPE VARIES BY GENE and it is usually NOT a phenotype name:
+   *
+   *   DPYD    "0.0"              <- activity score
+   *   CYP2D6  "3.0"              <- activity score
+   *   HLA-B   "*57:01 positive"  <- allele status
+   *
+   * Writing "Poor Metabolizer" here matches nothing. See `phenotype` below.
+   */
+  lookup: string; // "0.0"
+  /** The human name for the same result, for display only. NEVER join on this:
+   *  it is null for HLA genes, and several lookups can share one phenotype
+   *  (DPYD "0.0" and "0.5" are both Poor Metabolizer). */
+  phenotype: string | null; // "Poor Metabolizer"
   source: string; // "PharmCAT v3.2.0 (synthetic VCF)"
   reportedAt: string; // ISO
 }
@@ -89,7 +103,10 @@ export interface Alert {
   orderId: string;
   gene: string;
   diplotype: string;
+  /** the CPIC join key that matched -- "0.0", not "Poor Metabolizer" */
   lookup: string;
+  /** the human name for that lookup, for display. null for HLA genes. */
+  phenotype: string | null;
   drugName: string;
   severity: Severity;
   recommendation: string;

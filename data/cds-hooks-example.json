@@ -1,0 +1,102 @@
+{
+  "note": "SYNTHETIC. A real CDS Hooks v2.0.1 `order-sign` request as an EHR would POST it, with the DPYD Observation pre-attached. Used by tests/ and by the /api/cds-services endpoint's example. Patient ids match data/patients.json.",
+  "hook": "order-sign",
+  "hookInstance": "d1577c69-dfbe-44ad-ba6d-3e05e953b2ea",
+  "fhirServer": "https://fhir.example.org/api/FHIR/R4",
+  "fhirAuthorization": {
+    "access_token": "SYNTHETIC-not-a-real-token",
+    "token_type": "Bearer",
+    "expires_in": 300,
+    "scope": "patient/Observation.rs patient/MedicationRequest.rs",
+    "subject": "attest-pgx-client"
+  },
+  "context": {
+    "userId": "Practitioner/dr_chen",
+    "patientId": "pt_okafor",
+    "encounterId": "enc-4417",
+    "draftOrders": {
+      "resourceType": "Bundle",
+      "type": "collection",
+      "entry": [
+        {
+          "resource": {
+            "resourceType": "MedicationRequest",
+            "id": "mr-cape-1",
+            "status": "draft",
+            "intent": "order",
+            "medicationCodeableConcept": {
+              "coding": [
+                {
+                  "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                  "code": "194000",
+                  "display": "capecitabine 500 MG Oral Tablet"
+                }
+              ]
+            },
+            "subject": { "reference": "Patient/pt_okafor" },
+            "authoredOn": "2026-08-13"
+          }
+        }
+      ]
+    }
+  },
+  "prefetch": {
+    "pgx": {
+      "resourceType": "Bundle",
+      "type": "searchset",
+      "entry": [
+        {
+          "resource": {
+            "resourceType": "Observation",
+            "id": "obs-dpyd-pm",
+            "status": "final",
+            "category": [
+              {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                    "code": "laboratory"
+                  }
+                ]
+              }
+            ],
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "79719-1",
+                  "display": "DPYD gene product metabolic activity interpretation"
+                }
+              ]
+            },
+            "subject": { "reference": "Patient/pt_okafor" },
+            "effectiveDateTime": "2026-07-28",
+            "valueCodeableConcept": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "LA9657-3",
+                  "display": "Poor metabolizer"
+                }
+              ]
+            },
+            "component": [
+              {
+                "code": {
+                  "coding": [
+                    { "system": "http://loinc.org", "code": "48018-6", "display": "Gene studied [ID]" }
+                  ]
+                },
+                "valueCodeableConcept": {
+                  "coding": [
+                    { "system": "http://www.genenames.org/geneId", "code": "HGNC:3012", "display": "DPYD" }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

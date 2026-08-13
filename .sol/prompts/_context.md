@@ -73,12 +73,32 @@ committed to the repo. **It is the only source of clinical truth and the app mus
 network call to CPIC at runtime.** Conference wifi is assumed hostile.
 
 Shape: `{ [drugNameLowercase]: { [gene]: Alert[] } }` where each entry has `gene`, `lookup`,
-`drug`, `recommendation`, `classification`, `implication`, `comments`, `population`,
+`phenotype`, `drug`, `recommendation`, `classification`, `implication`, `comments`, `population`,
 `cpic_level_a`, `guideline_name`, `guideline_url`, `citations[]`, `_source`.
 
-**`lookup` is the join key, not `phenotype`.** CPIC keys most genes by phenotype
-(`"Poor Metabolizer"`) but HLA genes by allele status (`"*57:01 positive"`). Matching on phenotype
-alone silently returns nothing for HLA. Always match on `lookup`.
+### `lookup` joins. `phenotype` displays. Do not confuse them.
+
+**`lookup` is the join key and it is usually NOT a phenotype name.** Its shape varies by gene:
+
+| gene | `lookup` | `phenotype` |
+|---|---|---|
+| DPYD | `"0.0"` | `"Poor Metabolizer"` |
+| CYP2D6 | `"3.0"` | `"Ultrarapid Metabolizer"` |
+| HLA-B | `"*57:01 positive"` | `null` |
+
+For DPYD and CYP2D6, CPIC's `lookupkey` is an **activity score**. For HLA it is allele status and
+`phenotypes` is `{}` entirely. So:
+
+- Match on `lookup`, exact after trim and case-fold. Never fuzzy, never substring.
+- Render `phenotype` to the user — an activity score of `0.0` means nothing to a clinician.
+- Never join on `phenotype`: it is `null` for HLA, and it is **not unique** — DPYD `"0.0"` and
+  `"0.5"` are both `"Poor Metabolizer"`, so a phenotype join can silently pick the wrong row.
+
+The one deliberate exception is `data/policies.json`, whose `criterion.phenotype` matches the
+phenotype name, because payers write coverage policy in phenotype language. That file says so.
+
+This cost a real failure: `data/patients.json` originally carried `lookup: "Poor Metabolizer"` and
+**every alert silently failed to fire**. `npm run verify` is what caught it. Run it.
 
 ## DIRECTORY OWNERSHIP — HARD RULE
 

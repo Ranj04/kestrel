@@ -1,0 +1,639 @@
+[
+ {
+  "id": 100416,
+  "version": 72,
+  "name": "CYP2D6, OPRM1, COMT, and Opioids",
+  "url": "https://www.clinpgx.org/guideline/PA166251454",
+  "genes": [
+   "CYP2D6",
+   "COMT",
+   "OPRM1"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251454",
+  "publication": [
+   {
+    "pmid": "22205192",
+    "year": 2011,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guidelines for Codeine Therapy in the Context of Cytochrome P450 2D6 (CYP2D6) Genotype"
+   },
+   {
+    "pmid": "24458010",
+    "year": 2014,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) guidelines for cytochrome P450 2D6 (CYP2D6) genotype and codeine therapy: 2014 Update"
+   },
+   {
+    "pmid": "33387367",
+    "year": 2021,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) guideline for CYP2D6, OPRM1, and COMT genotype and select opioid therapy."
+   }
+  ]
+ },
+ {
+  "id": 100418,
+  "version": 71,
+  "name": "CYP3A5 and Tacrolimus",
+  "url": "https://www.clinpgx.org/guideline/PA166251451",
+  "genes": [
+   "CYP3A5"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251451",
+  "publication": [
+   {
+    "pmid": "25801146",
+    "year": 2015,
+    "title": "Clinical pharmacogenetics implementation consortium (CPIC) guidelines for CYP3A5 genotype and tacrolimus dosing"
+   }
+  ]
+ },
+ {
+  "id": 100419,
+  "version": 72,
+  "name": "DPYD and Fluoropyrimidines",
+  "url": "https://www.clinpgx.org/guideline/PA166251462",
+  "genes": [
+   "DPYD"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251462",
+  "publication": [
+   {
+    "pmid": "29152729",
+    "year": 2017,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for Dihydropyrimidine Dehydrogenase Genotype and Fluoropyrimidine Dosing: 2017 Update"
+   },
+   {
+    "pmid": "23988873",
+    "year": 2013,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guidelines for Dihydropyrimidine Dehydrogenase Genotype and Fluoropyrimidine Dosing"
+   }
+  ]
+ },
+ {
+  "id": 2405438,
+  "version": 67,
+  "name": "G6PD",
+  "url": "https://www.clinpgx.org/guideline/PA166251450",
+  "genes": [
+   "G6PD"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251450",
+  "publication": [
+   {
+    "pmid": "24787449",
+    "year": 2014,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guidelines for Rasburicase Therapy in the context of G6PD Deficiency Genotype"
+   },
+   {
+    "pmid": "36049896",
+    "year": 2022,
+    "title": "Expanded Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for Medication Use in the Context of G6PD Genotype."
+   }
+  ]
+ },
+ {
+  "id": 100423,
+  "version": 71,
+  "name": "HLA-A, HLA-B and Carbamazepine and Oxcarbazepine",
+  "url": "https://www.clinpgx.org/guideline/PA166251448",
+  "genes": [
+   "HLA-A",
+   "HLA-B"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251448",
+  "publication": [
+   {
+    "pmid": "29392710",
+    "year": 2018,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guideline for HLA Genotype and Use of Carbamazepine and Oxcarbazepine: 2017 Update."
+   },
+   {
+    "pmid": "23695185",
+    "year": 2013,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guidelines for HLA-B Genotype and Carbamazepine Dosing"
+   }
+  ]
+ },
+ {
+  "id": 100421,
+  "version": 71,
+  "name": "HLA-B and Abacavir",
+  "url": "https://www.clinpgx.org/guideline/PA166251444",
+  "genes": [
+   "HLA-B"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251444",
+  "publication": [
+   {
+    "pmid": "22378157",
+    "year": 2012,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guidelines for HLA-B Genotype and Abacavir Dosing"
+   },
+   {
+    "pmid": "24561393",
+    "year": 2014,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guidelines for HLA-B Genotype and Abacavir Dosing: 2014 update"
+   }
+  ]
+ },
+ {
+  "id": 100429,
+  "version": 71,
+  "name": "UGT1A1 and Atazanavir",
+  "url": "https://www.clinpgx.org/guideline/PA166251453",
+  "genes": [
+   "UGT1A1"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251453",
+  "publication": [
+   {
+    "pmid": "26417955",
+    "year": 2015,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for UGT1A1 and Atazanavir Prescribing"
+   }
+  ]
+ },
+ {
+  "id": 100409,
+  "version": 71,
+  "name": "CFTR and Ivacaftor",
+  "url": "https://www.clinpgx.org/guideline/PA166251449",
+  "genes": [
+   "CFTR"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251449",
+  "publication": [
+   {
+    "pmid": "24598717",
+    "year": 2014,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guidelines for Ivacaftor Therapy in the Context of CFTR Genotype"
+   }
+  ]
+ },
+ {
+  "id": 104245,
+  "version": 69,
+  "name": "CYP2B6 and efavirenz",
+  "url": "https://www.clinpgx.org/guideline/PA166251463",
+  "genes": [
+   "CYP2B6"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251463",
+  "publication": [
+   {
+    "pmid": "31006110",
+    "year": 2019,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for CYP2B6 and Efavirenz-containing Antiretroviral Therapy."
+   }
+  ]
+ },
+ {
+  "id": 5290481,
+  "version": 27,
+  "name": "CYP2B6 and methadone",
+  "url": "https://www.clinpgx.org/guideline/PA166411641",
+  "genes": [
+   "CYP2B6"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166411641",
+  "publication": [
+   {
+    "pmid": "38863207",
+    "year": 2024,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guideline for CYP2B6 Genotype and Methadone Therapy."
+   }
+  ]
+ },
+ {
+  "id": 100411,
+  "version": 71,
+  "name": "CYP2C19 and Clopidogrel",
+  "url": "https://www.clinpgx.org/guideline/PA166251443",
+  "genes": [
+   "CYP2C19"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251443",
+  "publication": [
+   {
+    "pmid": "21716271",
+    "year": 2011,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guidelines for Cytochrome P450-2C19 (CYP2C19) Genotype and Clopidogrel Therapy"
+   },
+   {
+    "pmid": "23698643",
+    "year": 2013,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) guidelines for cytochrome P450-2C19 (CYP2C19) genotype and clopidogrel therapy: 2013 Update"
+   },
+   {
+    "pmid": "35034351",
+    "year": 2022,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guideline for CYP2C19 Genotype and Clopidogrel Therapy: 2022 Update."
+   }
+  ]
+ },
+ {
+  "id": 100410,
+  "version": 71,
+  "name": "CYP2C19 and Voriconazole",
+  "url": "https://www.clinpgx.org/guideline/PA166251456",
+  "genes": [
+   "CYP2C19"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251456",
+  "publication": [
+   {
+    "pmid": "27981572",
+    "year": 2016,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC\u00ae) Guideline for CYP2C19 and Voriconazole Therapy"
+   }
+  ]
+ },
+ {
+  "id": 110058,
+  "version": 69,
+  "name": "CYP2C9 and NSAIDs",
+  "url": "https://www.clinpgx.org/guideline/PA166251464",
+  "genes": [
+   "CYP2C9"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251464",
+  "publication": [
+   {
+    "pmid": "32189324",
+    "year": 2020,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for CYP2C9 and Nonsteroidal Anti-inflammatory Drugs."
+   }
+  ]
+ },
+ {
+  "id": 100412,
+  "version": 71,
+  "name": "CYP2C9, HLA-B and Phenytoin",
+  "url": "https://www.clinpgx.org/guideline/PA166251461",
+  "genes": [
+   "CYP2C9",
+   "HLA-B"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251461",
+  "publication": [
+   {
+    "pmid": "25099164",
+    "year": 2014,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guidelines for CYP2C9 and HLA-B Genotype and Phenytoin Dosing"
+   },
+   {
+    "pmid": "32779747",
+    "year": 2020,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for CYP2C9 and HLA-B Genotypes and Phenytoin Dosing: 2020 Update."
+   }
+  ]
+ },
+ {
+  "id": 100425,
+  "version": 72,
+  "name": "CYP2C9, VKORC1, CYP4F2 and Warfarin",
+  "url": "https://www.clinpgx.org/guideline/PA166251465",
+  "genes": [
+   "CYP2C9",
+   "CYP4F2",
+   "VKORC1"
+  ],
+  "notesonusage": "Warfarin recommendation does not follow simple diplotype to phenotype translation. Read the guideline text and follow the recommendation diagram found at http://files.cpicpgx.org/images/warfarin/warfarin_recommendation_diagram.png",
+  "clinpgxid": "PA166251465",
+  "publication": [
+   {
+    "pmid": "28198005",
+    "year": 2017,
+    "title": "Clinical pharmacogenetics implementation consortium (cpic) guideline for pharmacogenetics-guided warfarin dosing: 2017 update"
+   },
+   {
+    "pmid": "21900891",
+    "year": 2011,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guidelines for CYP2C9 and VKORC1 Genotypes and Warfarin Dosing"
+   }
+  ]
+ },
+ {
+  "id": 104243,
+  "version": 71,
+  "name": "CYP2D6 and Atomoxetine",
+  "url": "https://www.clinpgx.org/guideline/PA166251459",
+  "genes": [
+   "CYP2D6"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251459",
+  "publication": [
+   {
+    "pmid": "30801677",
+    "year": 2019,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for CYP2D6 Genotype and Atomoxetine Therapy."
+   }
+  ]
+ },
+ {
+  "id": 100417,
+  "version": 71,
+  "name": "CYP2D6 and Ondansetron and Tropisetron",
+  "url": "https://www.clinpgx.org/guideline/PA166251457",
+  "genes": [
+   "CYP2D6"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251457",
+  "publication": [
+   {
+    "pmid": "28002639",
+    "year": 2016,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for CYP2D6 Genotype and Use of Ondansetron and Tropisetron"
+   },
+   {
+    "pmid": "41979467",
+    "year": 2026,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for CYP2D6 Genotype and Use of 5-HT 3 Receptor Antagonists: 2026 Update."
+   }
+  ]
+ },
+ {
+  "id": 100415,
+  "version": 71,
+  "name": "CYP2D6 and Tamoxifen",
+  "url": "https://www.clinpgx.org/guideline/PA166251458",
+  "genes": [
+   "CYP2D6"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251458",
+  "publication": [
+   {
+    "pmid": "29385237",
+    "year": 2018,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for CYP2D6 and Tamoxifen Therapy."
+   }
+  ]
+ },
+ {
+  "id": 5290480,
+  "version": 27,
+  "name": "CYP2D6, ADRB1, ADRB2, ADRA2C, GRK4, and GRK5 and Beta-Blockers",
+  "url": "https://www.clinpgx.org/guideline/PA166343383",
+  "genes": [
+   "CYP2D6",
+   "ADRB1",
+   "ADRB2",
+   "ADRA2C",
+   "GRK4",
+   "GRK5"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166343383",
+  "publication": [
+   {
+    "pmid": "38951961",
+    "year": 2024,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guideline (CPIC) for CYP2D6, ADRB1, ADRB2, ADRA2C, GRK4, and GRK5 Genotypes and Beta-Blocker Therapy."
+   }
+  ]
+ },
+ {
+  "id": 100414,
+  "version": 71,
+  "name": "CYP2D6, CYP2C19 and Tricyclic Antidepressants",
+  "url": "https://www.clinpgx.org/guideline/PA166251445",
+  "genes": [
+   "CYP2C19",
+   "CYP2D6"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251445",
+  "publication": [
+   {
+    "pmid": "23486447",
+    "year": 2013,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guideline for CYP2D6 and CYP2C19 Genotypes and Dosing of Tricyclic Antidepressants"
+   },
+   {
+    "pmid": "27997040",
+    "year": 2016,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guideline (CPIC\u00ae) for CYP2D6 and CYP2C19 Genotypes and Dosing of Tricyclic Antidepressants: 2016 Update"
+   }
+  ]
+ },
+ {
+  "id": 100413,
+  "version": 25,
+  "name": "CYP2D6, CYP2C19, CYP2B6, SLC6A4, HTR2A and Serotonin Reuptake Inhibitor Antidepressants",
+  "url": "https://www.clinpgx.org/guideline/PA166251452",
+  "genes": [
+   "CYP2D6",
+   "CYP2C19",
+   "CYP2B6",
+   "SLC6A4",
+   "HTR2A"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251452",
+  "publication": [
+   {
+    "pmid": "37032427",
+    "year": 2023,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for CYP2D6, CYP2C19, CYP2B6, SLC6A4, and HTR2A Genotypes and Serotonin Reuptake Inhibitor Antidepressants."
+   },
+   {
+    "pmid": "25974703",
+    "year": 2015,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for CYP2D6 and CYP2C19 Genotypes and Dosing of Selective Serotonin Reuptake Inhibitors"
+   }
+  ]
+ },
+ {
+  "id": 100422,
+  "version": 71,
+  "name": "HLA-B and Allopurinol",
+  "url": "https://www.clinpgx.org/guideline/PA166251446",
+  "genes": [
+   "HLA-B"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251446",
+  "publication": [
+   {
+    "pmid": "23232549",
+    "year": 2012,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guidelines for Human Leukocyte Antigen-B Genotype and Allopurinol Dosing"
+   },
+   {
+    "pmid": "26094938",
+    "year": 2015,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) guidelines for human leukocyte antigen B (HLA-B) genotype and allopurinol dosing: 2015 update"
+   }
+  ]
+ },
+ {
+  "id": 100424,
+  "version": 72,
+  "name": "IFNL3 and Peginterferon-alpha-based Regimens",
+  "url": "https://www.clinpgx.org/guideline/PA166251455",
+  "genes": [
+   "IFNL3"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251455",
+  "publication": [
+   {
+    "pmid": "24096968",
+    "year": 2013,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) guidelines for IFNL3 (IL28B) genotype and peginterferon alpha based regimens"
+   }
+  ]
+ },
+ {
+  "id": 826283,
+  "version": 69,
+  "name": "MT-RNR1 and Aminoglycosides",
+  "url": "https://www.clinpgx.org/guideline/PA166251466",
+  "genes": [
+   "MT-RNR1"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251466",
+  "publication": [
+   {
+    "pmid": "34032273",
+    "year": 2021,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) guideline for the use of aminoglycosides based on MT-RNR1 genotype."
+   }
+  ]
+ },
+ {
+  "id": 6478852,
+  "version": 18,
+  "name": "NAT2 and Hydralazine",
+  "url": "https://www.clinpgx.org/guideline/PA166416361",
+  "genes": [
+   "NAT2"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166416361",
+  "publication": [
+   {
+    "pmid": "40974042",
+    "year": 2025,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guideline for NAT2 Genotype and Hydralazine Therapy."
+   }
+  ]
+ },
+ {
+  "id": 100427,
+  "version": 71,
+  "name": "RYR1, CACNA1S and Volatile anesthetic agents and Succinylcholine",
+  "url": "https://www.clinpgx.org/guideline/PA166251460",
+  "genes": [
+   "CACNA1S",
+   "RYR1"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251460",
+  "publication": [
+   {
+    "pmid": "30499100",
+    "year": 2018,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for the use of potent volatile anesthetic agents and succinylcholine in the context of RYR1 or CACNA1S genotypes"
+   }
+  ]
+ },
+ {
+  "id": 100426,
+  "version": 72,
+  "name": "SLCO1B1, ABCG2, CYP2C9, and Statins",
+  "url": "https://www.clinpgx.org/guideline/PA166264281",
+  "genes": [
+   "SLCO1B1",
+   "ABCG2",
+   "CYP2C9"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166264281",
+  "publication": [
+   {
+    "pmid": "24918167",
+    "year": 2014,
+    "title": "The Clinical Pharmacogenetics Implementation Consortium (CPIC) guideline for SLCO1B1 and simvastatin-induced myopathy: 2014 update"
+   },
+   {
+    "pmid": "22617227",
+    "year": 2012,
+    "title": "The Clinical Pharmacogenomics Implementation Consortium: Guideline for SLCO1B1 and Simvastatin-Induced Myopathy"
+   },
+   {
+    "pmid": "35152405",
+    "year": 2022,
+    "title": "The Clinical Pharmacogenetics Implementation Consortium (CPIC) guideline for SLCO1B1, ABCG2, and CYP2C9 and statin-associated musculoskeletal symptoms."
+   }
+  ]
+ },
+ {
+  "id": 100428,
+  "version": 71,
+  "name": "TPMT, NUDT15 and Thiopurines",
+  "url": "https://www.clinpgx.org/guideline/PA166251442",
+  "genes": [
+   "NUDT15",
+   "TPMT"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251442",
+  "publication": [
+   {
+    "pmid": "30447069",
+    "year": 2018,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) guideline for thiopurine dosing based on TPMT and NUDT15 genotypes: 2018 update."
+   },
+   {
+    "pmid": "21270794",
+    "year": 2011,
+    "title": "Clinical pharmacogenetics implementation consortium guidelines for thiopurine methyltransferase genotype and thiopurine dosing"
+   },
+   {
+    "pmid": "23422873",
+    "year": 2013,
+    "title": "Clinical Pharmacogenetics Implementation Consortium Guidelines for Thiopurine Methyltransferase Genotype and Thiopurine Dosing: 2013 Update"
+   },
+   {
+    "pmid": "41618934",
+    "year": 2026,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for Thiopurine Dosing Based on TPMT and NUDT15 Genotypes: 2025 Update."
+   }
+  ]
+ },
+ {
+  "id": 110076,
+  "version": 68,
+  "name": "CYP2C19 and Proton Pump Inhibitors",
+  "url": "https://www.clinpgx.org/guideline/PA166251441",
+  "genes": [
+   "CYP2C19"
+  ],
+  "notesonusage": null,
+  "clinpgxid": "PA166251441",
+  "publication": [
+   {
+    "pmid": "32770672",
+    "year": 2020,
+    "title": "Clinical Pharmacogenetics Implementation Consortium (CPIC) Guideline for CYP2C19 and Proton Pump Inhibitor Dosing."
+   }
+  ]
+ }
+]

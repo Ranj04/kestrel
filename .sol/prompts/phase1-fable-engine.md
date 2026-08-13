@@ -33,24 +33,25 @@ and the ledger types.
 **Adding a field is safe. Renaming or removing one is not.** If you need that, write
 `.sol/requests/<task>.md` and keep moving.
 
-## Deliverable 2 — `data/patients.json`
+## Deliverable 2 — `data/patients.json` is ALREADY WRITTEN and verified. Do not rewrite it.
 
-Three synthetic patients. **Do not invent the `lookup` strings.** Open
-`data/cpic/index.json`, find the real entries, and copy the `lookup` values character for
-character. If `lookup` for DPYD in that file is `"Poor Metabolizer"`, write exactly that. A
-mismatched string here means the alert silently never fires and you will lose an hour finding it.
+Four synthetic patients, already in the repo, and every `diplotype` / `lookup` / `phenotype`
+value is copied verbatim from a row in CPIC's `diplotype` table. `npm run verify` confirms all
+four resolve against the cache. **Read the file. Do not regenerate it, and do not delete the
+fourth patient** — Bhattacharya carries phase0 acceptance test #4.
 
-| patientId | who | gene result | why it exists |
+| patientId | who | `lookup` → `phenotype` | why it exists |
 |---|---|---|---|
-| `pt_okafor` | Maya Okafor, 61F, Stage III colorectal adenocarcinoma | DPYD, poor metabolizer | the money shot — capecitabine → avoid |
-| `pt_reyes` | Daniel Reyes, 34M, post-op pain after ORIF | CYP2D6, ultrarapid metabolizer | codeine → avoid. proves it isn't one hardcoded case |
-| `pt_lindqvist` | Ana Lindqvist, 47F, Stage II colon adenocarcinoma | DPYD, normal metabolizer | capecitabine → **NO ALERT**. proves it isn't a red-screen generator |
+| `pt_okafor` | Maya Okafor, 61F, Stage III colorectal adenocarcinoma | DPYD `"0.0"` → Poor Metabolizer | the money shot — capecitabine → avoid |
+| `pt_reyes` | Daniel Reyes, 34M, post-op pain after ORIF | CYP2D6 `"3.0"` → Ultrarapid Metabolizer | codeine → avoid. proves it isn't one hardcoded case |
+| `pt_lindqvist` | Ana Lindqvist, 47F, Stage II colon adenocarcinoma | DPYD `"2.0"` → Normal Metabolizer | capecitabine → **NO ALERT**. proves it isn't a red-screen generator |
+| `pt_bhattacharya` | Ravi Bhattacharya, 58M, metastatic colorectal | none on file | capecitabine → coverage `pended`. the most common real prior-auth outcome |
 
-Give each a plausible `diplotype` string and a `source` of
-`"PharmCAT v3.2.0 (synthetic VCF)"`. Top-level key `"note"`:
-`"SYNTHETIC — no real patient data. Genotypes hand-authored to match CPIC lookup keys."`
+Rows three and four are not filler. A demo that always alarms proves nothing.
 
-The third patient is not filler. A demo that always alarms proves nothing.
+**If you ever add a patient:** the `lookup` is an activity score, not a phenotype name. Look the
+diplotype up in `data/cpic/diplotype.json` and copy its `lookupkey` — do not derive it. That file
+is gitignored for size; re-fetch with `python3 scripts/cache_cpic.py` if it is not on disk.
 
 ---
 
@@ -93,21 +94,35 @@ export function evaluate(patient: Patient, drugName: string, orderId: string): A
 ```
 
 For each of the patient's `results`, look up `index[drugName][result.gene]`, then find the entry
-whose `lookup` matches `result.lookup`. Match case-insensitively and tolerate whitespace, but do
+whose **`lookup`** matches `result.lookup`. Match case-insensitively and tolerate whitespace, but do
 **not** fuzzy-match — a wrong match here is a wrong clinical recommendation.
+
+**Join on `lookup`, never on `phenotype`.** `lookup` is an activity score for DPYD and CYP2D6
+(`"0.0"`, `"3.0"`); `phenotype` is the human name and exists only for display. See `_context.md`.
+Joining on `phenotype` is null for HLA and non-unique for DPYD, so it can cite the wrong row.
+Carry `phenotype` onto the `Alert` for rendering — the card must say "Poor Metabolizer", not "0.0".
 
 Copy CPIC's strings through **verbatim**. Do not reword, summarize, truncate, or title-case
 anything. `sourceUrl` comes from the entry's `_source`.
 
-Severity is derived from CPIC's own text, not invented:
+Severity is derived from CPIC's own text, not invented. **This exact rule already exists** as
+`severityOf(text, classification)` in `scripts/verify-setup.mjs`:
 
-- `critical` — recommendation text contains "avoid" (case-insensitive), **or** `classification`
-  is `"Strong"` and the text contains "reduce" or "not recommended"
-- `caution` — any other actionable recommendation
-- `none` — text indicates no change to therapy; **return `null`, do not raise an alert**
+```js
+if (/avoid/i.test(t)) return "critical";
+if (classification === "Strong" && /reduce|not recommended/i.test(t)) return "critical";
+if (/no indication to change|label-recommended|standard dosing|no recommendation/i.test(t))
+  return "none";
+return "caution";
+```
 
-Put that rule in a single small function with a comment naming it as the only place severity is
-decided.
+`none` means **return `null`, do not raise an alert.**
+
+**Move it, do not copy it.** Export `severityOf` from `lib/pgx/evaluate.ts`, then change
+`verify-setup.mjs` to import it and delete its local copy. Two declarations of a closed set that
+can silently disagree is exactly the defect this project already recorded as R-5 — the preflight
+would keep printing PASS while `evaluate.ts` classified differently. Closing it is part of this
+deliverable, not a nicety. `scripts/verify-setup.mjs` is `.mjs` and Fable owns both files.
 
 If a patient has several genes hitting one drug, return the highest-severity alert. Note in a
 comment that a real system would surface all of them; one is right for a 90-second demo.

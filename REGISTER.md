@@ -76,16 +76,48 @@ finding is the missing declaration, not the copy."
 it and have `verify-setup.mjs` import it instead of re-deriving. **Fable does this in
 Phase 1 or the duplication is permanent.**
 
-## R-6 · OPEN · `data/patients.json` lookup strings are unverified against the real cache
+**Update 2 — the trigger had no carrier.** The closure plan above lived only in this
+register. `phase1-fable-engine.md`, the file Fable actually reads, never named
+`severityOf` and never mentioned rewiring the preflight, so the "natural trigger" would
+never have fired. Worse, the two copies were still not identical: the preflight's `none`
+branch is a four-alternative regex, while the prompt carried one vague English sentence
+("text indicates no change to therapy") that an implementer would have rendered
+differently. The prompt now carries the literal rule and an explicit instruction to
+**move it, not copy it**, with this entry cited. Still OPEN until Fable does it — but the
+instruction is now in the path of the agent who has to act on it.
 
-The four genotype `lookup` values were authored from CPIC API responses read during
-planning, not compared against a generated `data/cpic/index.json` — the authoring
-environment could not reach `api.cpicpgx.org`.
+## R-6 · CLOSED · `data/patients.json` lookup strings were wrong — every alert silently failed
 
-**This is a claim broader than its check** (rule 4g) and it is recorded rather than
-asserted away. `npm run verify` is the instrument that closes it, and it must be run
-before any feature code. If it reports a mismatch, the finding is in `patients.json`,
-not in CPIC.
+Recorded as unverified because the authoring environment could not reach
+`api.cpicpgx.org`. On the first real run against a generated `data/cpic/index.json`,
+**all four were wrong**, and the failure mode was exactly the silent one this project
+was most afraid of: no error, no warning, the alert simply never fires.
+
+The values were phenotype names (`"Poor Metabolizer"`). CPIC's `lookupkey` — the join
+key — is an **activity score** for DPYD and CYP2D6:
+
+| gene | actual `lookup` | `phenotype` |
+|---|---|---|
+| DPYD | `"0.0"` | Poor Metabolizer |
+| CYP2D6 | `"3.0"` | Ultrarapid Metabolizer |
+| DPYD | `"2.0"` | Normal Metabolizer |
+| HLA-B | `"*57:01 positive"` | `null` |
+
+D3 had the shape of this right ("`lookup` is the join key, not `phenotype`") but drew the
+wrong conclusion from it — it assumed `lookupkey` *was* the phenotype for non-HLA genes
+and that HLA was the only special case. The real rule is that `lookupkey` is a different
+vocabulary per gene family, and a phenotype name is never a safe join key.
+
+**Fixed:** the index now carries `lookup` **and** `phenotype`; `patients.json` carries
+both, copied verbatim from CPIC's `diplotype` table (`c.1905+1G>A (*2A)/c.1905+1G>A (*2A)`
+→ `0.0` → Poor Metabolizer); `contracts.ts` gained `phenotype` on `GeneResult` and `Alert`
+(additive, legal under the freeze); `policies.json` criteria were renamed `lookup` →
+`phenotype`, because payers genuinely do write policy in phenotype language and that is now
+the single documented exception. `npm run verify` and `npm run verify:prove` both pass.
+
+**Read this before loosening any match.** The correct fix was to fix the data. A fuzzy or
+substring `lookup` match would also have made the alert fire — and would have made DPYD
+`"2.0"` (Normal) reachable from `"0.0"` (Poor), i.e. the opposite recommendation.
 
 ## R-7 · CLOSED · `check-removals.sh` counted tokens this project does not use
 
@@ -103,15 +135,16 @@ removal reports `6 -> 5`.
 rule that says to build a positive control*, and still shipped blind. The control
 caught it in under a minute. Reviewing the script would not have.
 
-## R-8 · OPEN · `check-removals.sh --prove` leaves a `.provebak` in the changed set
+## R-8 · CLOSED · `check-removals.sh --prove` left a `.provebak` in the changed set
 
 Visible in the prove output: `new  tests/hash.test.ts.provebak`. Harmless — the file is
 restored and the backup removed — but the checker sees it mid-run and reports it. Cosmetic
 noise in an instrument whose whole value is that its output is unambiguous.
 
-**Fix:** write the backup outside the repo (`/tmp`) rather than alongside the file.
-Not done now: it costs a line and the demo clock is the binding constraint. Recorded so
-it is not mistaken for a real finding when someone runs `--prove` later.
+**Fixed:** the backup goes to `mktemp` outside the repo, with a `trap` restoring the file
+on interrupt as well as on the normal path — the old version would have left the test file
+truncated if `--prove` was killed mid-run. Re-proved: `PROVE OK`, `assert.' 6 -> 0`, no
+`.provebak` in `git status`, all 6 assertions back in `tests/hash.test.ts`.
 
 ---
 
@@ -176,3 +209,29 @@ fallback stack in `globals.css` (a failure changes the typeface, never the layou
 an explicit warm step in the README. **Not fully fixed** — self-hosting the two fonts
 would close it properly and costs ~10 minutes. Recorded rather than done, because the
 mitigation is adequate and the clock is not.
+
+## R-15 · OPEN, STRETCH ONLY · no live EHR integration surface
+
+**Question raised:** how does this reach a hospital's patient data?
+
+**Answer, recorded in `docs/INTEGRATION.md`:** it never touches their database. Three
+standard surfaces — CDS Hooks `order-sign` (the EHR calls us), FHIR Genomics Reporting
+Observations for the genotype, SMART App Launch for any UI. The integration is a solved
+standard; the binding constraint is that **most PGx results are still unstructured PDFs**
+(Penn: 627 discrete results vs ~21,500 documents).
+
+**Built:** the documentation, and `data/cds-hooks-example.json` — a real `order-sign`
+request whose DPYD Observation uses verified LOINC `79719-1` / `LA9657-3` and whose
+patient id and lookup string already agree with `data/patients.json`.
+
+**Not built:** `.sol/prompts/phase3-fable-cdshooks.md` specifies the live endpoints and
+is marked **stretch only — do not start before the fallback video is recorded.** 40
+minute cap. This converts one pitch sentence from assertion to artifact; it is strictly
+less valuable than the thing it decorates.
+
+**UNVERIFIED, carried forward deliberately:** Epic's 2026 CDS Hooks card-model support.
+Available statements are 2021–2022 (Epic staff, HL7 chat archive) and `fhir.epic.com` is
+login-gated. **Do not claim Epic honours `overrideReasons`, `suggestions`, or the
+feedback endpoint.** The safe and true form is "the standard defines them and we
+implement them." Also unverified: any figure for US hospital Genomics Module adoption —
+none was found, treat any number heard as unsourced.

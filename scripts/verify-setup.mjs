@@ -64,8 +64,8 @@ ok(`data/cpic/index.json — ${Object.keys(index).length} drugs`);
 const { patients } = read("data/patients.json");
 ok(`data/patients.json — ${patients.length} patients`);
 if (PROVE) {
-  patients.find((p) => p.patientId === "pt_okafor").results[0].lookup = "Poor Metabolizerr";
-  console.log("        \x1b[2m--prove: corrupted pt_okafor DPYD lookup on purpose\x1b[0m");
+  patients.find((p) => p.patientId === "pt_okafor").results[0].lookup = "0.O";
+  console.log("        \x1b[2m--prove: corrupted pt_okafor DPYD lookup on purpose (0.0 -> 0.O)\x1b[0m");
 }
 
 const policyFile = read("data/policies.json");
@@ -93,6 +93,9 @@ for (const [pid, drug, gene, expect] of DEMO) {
     continue;
   }
 
+  // Join on `lookup` ONLY. For DPYD/CYP2D6 that is an activity score, so a
+  // patient carrying "Poor Metabolizer" here matches nothing -- which is the
+  // exact failure this preflight was built to catch, and did.
   const hit = entries.find(
     (e) => String(e.lookup).trim().toLowerCase() === r.lookup.trim().toLowerCase(),
   );
@@ -100,7 +103,14 @@ for (const [pid, drug, gene, expect] of DEMO) {
     bad(`${pid}: lookup "${r.lookup}" does not match any CPIC entry for ${drug}/${gene}`);
     info(`CPIC offers: ${[...new Set(entries.map((e) => JSON.stringify(e.lookup)))].join(" | ")}`);
     info("fix the lookup string in data/patients.json to match one of those exactly");
+    info("NOTE: `lookup` is CPIC's join key — an activity score for these genes, not a phenotype name");
     continue;
+  }
+
+  // The display name must agree too, or the screen and the citation disagree.
+  if (r.phenotype !== hit.phenotype) {
+    bad(`${pid}: phenotype "${r.phenotype}" but CPIC lookup ${JSON.stringify(r.lookup)} is "${hit.phenotype}"`);
+    info("the join succeeded on the wrong row, or patients.json mislabels it");
   }
 
   const text = String(hit.recommendation ?? "");
@@ -110,27 +120,30 @@ for (const [pid, drug, gene, expect] of DEMO) {
     bad(`${pid} + ${drug}: expected ${expect}, derived ${severity}`);
     info(`"${text.slice(0, 120)}"`);
   } else {
-    ok(`${pid} + ${drug} — ${hit.lookup} — ${severity}`);
+    ok(`${pid} + ${drug} — lookup ${JSON.stringify(hit.lookup)} = ${hit.phenotype} — ${severity}`);
     info(`"${text.slice(0, 96)}${text.length > 96 ? "…" : ""}"`);
     info(`${hit.classification ?? "?"} · Level A: ${hit.cpic_level_a} · ${(hit.citations ?? []).length} citation(s)`);
   }
 }
 
 // ------------------------------------------------ 3. policy clauses resolve
-console.log("\npolicy clauses reference genotypes that exist");
+// Payers write policy in phenotype language ("poor metabolizer"), so clause
+// criteria match on `phenotype`, not on CPIC's activity-score `lookup`. That is
+// the one place matching is on the display field, and it is deliberate.
+console.log("\npolicy clauses reference phenotypes that exist");
 for (const pol of policyFile.policies) {
   for (const c of pol.clauses) {
     const crit = c.criterion ?? {};
-    if (crit.type !== "phenotype_restriction" || !crit.lookup) continue;
+    if (crit.type !== "phenotype_restriction" || !crit.phenotype) continue;
     const drug = pol.drugs.find((d) => index[d.toLowerCase()]?.[crit.gene]);
     if (!drug) { bad(`${c.clauseId}: no CPIC data for ${crit.gene} on any of ${pol.drugs.join("/")}`); continue; }
     const entries = index[drug.toLowerCase()][crit.gene];
     const hit = entries.some(
-      (e) => String(e.lookup).trim().toLowerCase() === String(crit.lookup).trim().toLowerCase(),
+      (e) => String(e.phenotype).trim().toLowerCase() === String(crit.phenotype).trim().toLowerCase(),
     );
     hit
-      ? ok(`${c.clauseId} — ${crit.gene} "${crit.lookup}"`)
-      : bad(`${c.clauseId}: "${crit.lookup}" not a CPIC lookup for ${crit.gene}/${drug}`);
+      ? ok(`${c.clauseId} — ${crit.gene} "${crit.phenotype}"`)
+      : bad(`${c.clauseId}: "${crit.phenotype}" not a CPIC phenotype for ${crit.gene}/${drug}`);
   }
 }
 

@@ -9,3 +9,9 @@ next-env.d.ts
 
 # The ledger is demo state, not source. Keep the file, ignore its contents.
 data/ledger.jsonl
+
+# 116 MB, and build_index() never reads it — it exists so a human can look up a
+# real diplotype -> activity-score row when authoring data/patients.json. Above
+# GitHub's hard 100 MB file limit, so committing it would break any later push.
+# Re-fetch with `python3 scripts/cache_cpic.py`; `--rebuild` works without it.
+data/cpic/diplotype.json

@@ -18,11 +18,23 @@ Advocate's "LLM writes prose, deterministic code does the math."
 So it can be edited by hand on stage, in front of a skeptical judge, in ten
 seconds. A Postgres table cannot be shown that way.
 
-## D3 — `lookup` is the join key, not `phenotype`
+## D3 — `lookup` is the join key, `phenotype` is for display
 
-CPIC keys most genes by phenotype but HLA genes by allele status, and
-`phenotypes` is `{}` for those. `npm run verify` cross-checks every patient
-lookup against the cache because this failure is silent.
+CPIC's `lookupkey` is an **activity score** for DPYD and CYP2D6 (`"0.0"`, `"3.0"`)
+and **allele status** for HLA (`"*57:01 positive"`, where `phenotypes` is `{}`).
+It is almost never a phenotype name. The index therefore carries both fields:
+join on `lookup`, render `phenotype`.
+
+Joining on `phenotype` instead fails two ways — it is `null` for every HLA gene,
+and it is not unique, so DPYD `"0.0"` and `"0.5"` both being `"Poor Metabolizer"`
+means a phenotype join can pick the wrong row and cite the wrong recommendation.
+
+**This was not theoretical.** `data/patients.json` shipped with
+`lookup: "Poor Metabolizer"`, which matches nothing, so every alert silently
+failed to fire — the exact silent failure the preflight was built for. It was
+caught by `npm run verify` on the first real run against the cache, not by
+review. `data/policies.json` is the one deliberate exception: its criteria match
+`phenotype`, because payer policy is written in phenotype language.
 
 ## D4 — hashing is ported from writ.ai, not written fresh
 

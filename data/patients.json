@@ -1,5 +1,5 @@
 {
-  "note": "SYNTHETIC — no real patient data. Genotypes are hand-authored to match CPIC lookup keys exactly. Run `npm run verify` after caching CPIC to confirm every lookup below still resolves; a single character of drift silently disables an alert.",
+  "note": "SYNTHETIC — no real patient data. Every `diplotype`, `lookup` and `phenotype` below is copied verbatim from a row in CPIC's diplotype table, not derived by hand. `lookup` is the join key and for DPYD/CYP2D6 it is an ACTIVITY SCORE, not a phenotype name — writing 'Poor Metabolizer' there matches nothing. Run `npm run verify` after caching CPIC; a single character of drift silently disables an alert.",
   "patients": [
     {
       "patientId": "pt_okafor",
@@ -11,8 +11,9 @@
       "results": [
         {
           "gene": "DPYD",
-          "diplotype": "c.1905+1G>A/c.1905+1G>A",
-          "lookup": "Poor Metabolizer",
+          "diplotype": "c.1905+1G>A (*2A)/c.1905+1G>A (*2A)",
+          "lookup": "0.0",
+          "phenotype": "Poor Metabolizer",
           "source": "PharmCAT v3.2.0 (synthetic VCF)",
           "reportedAt": "2026-07-28T16:40:00Z"
         }
@@ -29,7 +30,8 @@
         {
           "gene": "CYP2D6",
           "diplotype": "*1/*2x2",
-          "lookup": "Ultrarapid Metabolizer",
+          "lookup": "3.0",
+          "phenotype": "Ultrarapid Metabolizer",
           "source": "PharmCAT v3.2.0 (synthetic VCF, outside call)",
           "reportedAt": "2026-06-02T11:15:00Z"
         }
@@ -46,7 +48,8 @@
         {
           "gene": "DPYD",
           "diplotype": "Reference/Reference",
-          "lookup": "Normal Metabolizer",
+          "lookup": "2.0",
+          "phenotype": "Normal Metabolizer",
           "source": "PharmCAT v3.2.0 (synthetic VCF)",
           "reportedAt": "2026-08-04T09:05:00Z"
         }

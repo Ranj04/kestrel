@@ -22,10 +22,15 @@ if [ "$BASE" = "--prove" ]; then
   # Positive control. Delete a real assertion in a scratch copy and confirm we shout.
   f=$(git ls-files 'tests/*.test.ts' | head -1)
   [ -n "$f" ] || { echo "--prove: no test files tracked yet; nothing to prove against"; exit 1; }
-  cp "$f" "$f.provebak"
-  grep -v 'assert\.' "$f.provebak" > "$f"
+  # Backup OUTSIDE the repo: a sibling .provebak lands in the changed set and the
+  # checker reports it mid-run, which is noise in an instrument whose whole value
+  # is that its output is unambiguous. (R-8)
+  bak=$(mktemp -t provebak)
+  trap 'cp "$bak" "$f" 2>/dev/null; rm -f "$bak"' EXIT INT TERM
+  cp "$f" "$bak"
+  grep -v 'assert\.' "$bak" > "$f"
   sh "$0" HEAD >/tmp/prove.out 2>&1; rc=$?
-  mv "$f.provebak" "$f"
+  cp "$bak" "$f"; rm -f "$bak"; trap - EXIT INT TERM
   if [ $rc -eq 0 ]; then
     echo "PROVE FAILED — removing every assert. from $f did not trip the checker."
     echo "The checker is vacuous. Fix it before trusting any pass it reports."

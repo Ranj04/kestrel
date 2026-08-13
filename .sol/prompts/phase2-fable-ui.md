@@ -34,7 +34,11 @@ event's rules and because saying it before anyone asks reads as competence.
 ### `components/prescribe/PatientCard.tsx`
 
 Patient selector across the three synthetic patients, then name, MRN, age/sex, indication, and the
-gene results as small chips: `DPYD  c.1905+1G>A/c.1679T>G  Poor Metabolizer`.
+gene results as small chips, copied from `data/patients.json`:
+`DPYD  c.1905+1G>A (*2A)/c.1905+1G>A (*2A)  Poor Metabolizer`.
+
+Render `phenotype`, not `lookup` — `lookup` is CPIC's activity-score join key (`"0.0"`) and means
+nothing to a clinician. It never goes on screen.
 
 Under the chips, small and grey: `PharmCAT v3.2.0 (synthetic VCF)`. That one line makes the
 genotype look like it came from somewhere.

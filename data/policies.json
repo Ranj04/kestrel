@@ -1,5 +1,5 @@
 {
-  "note": "SYNTHETIC — fictional payer coverage policy authored for a hackathon demo. Not a real coverage document from any plan. Clause text is written to be structurally realistic, not copied from any payer.",
+  "note": "SYNTHETIC — fictional payer coverage policy authored for a hackathon demo. Not a real coverage document from any plan. Clause text is written to be structurally realistic, not copied from any payer. `criterion.phenotype` matches a patient's `phenotype` (the human name), NOT their `lookup` (CPIC's activity-score join key) — payers write policy in phenotype language, so this is the one place matching is on the display field rather than the key.",
   "payer": "Meridian Health Plan",
   "policies": [
     {
@@ -21,7 +21,7 @@
           "criterion": {
             "type": "phenotype_restriction",
             "gene": "DPYD",
-            "lookup": "Poor Metabolizer",
+            "phenotype": "Poor Metabolizer",
             "outcome": "deny_standard_dose",
             "alternative": "Reduced starting dose with documented therapeutic drug monitoring"
           },
@@ -33,7 +33,7 @@
           "criterion": {
             "type": "phenotype_restriction",
             "gene": "DPYD",
-            "lookup": "Intermediate Metabolizer",
+            "phenotype": "Intermediate Metabolizer",
             "outcome": "approve_with_conditions"
           },
           "scopes": ["dosing.capecitabine", "coverage.capecitabine"]
@@ -44,7 +44,7 @@
           "criterion": {
             "type": "phenotype_restriction",
             "gene": "DPYD",
-            "lookup": "Normal Metabolizer",
+            "phenotype": "Normal Metabolizer",
             "outcome": "approve"
           },
           "scopes": ["coverage.capecitabine"]
@@ -64,7 +64,7 @@
           "criterion": {
             "type": "phenotype_restriction",
             "gene": "CYP2D6",
-            "lookup": "Ultrarapid Metabolizer",
+            "phenotype": "Ultrarapid Metabolizer",
             "outcome": "deny",
             "alternative": "Non-codeine analgesic (covered without prior authorization)"
           },
