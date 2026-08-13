@@ -507,3 +507,46 @@ Also found but not fetched: Cigna's actual capecitabine/Xeloda PA policy PDF
 extraction inside the timebox was not worth the risk once Aetna had already landed.
 
 **No UI. One narration line, per instruction.**
+
+## R-23 · CLOSED · item 4 shipped as a ROUTE, not "one small panel" — prompt and artifact disagree, artifact won
+
+`phase4-sponsors.md` item 4 asked for "one small panel." What shipped in `8945e96`
+is a separate `/pipeline` route. **Recorded per rule 4i because the prompt and the
+artifact disagree and nobody would otherwise have a line to review.**
+
+**Why the artifact won:** phase5 froze the demo screen. At 1280×720 the prescribing
+pane had 31px of headroom after the stage-1 token pass, and Okafor's card is the
+tallest state in the product. Adding a panel to that screen would have spent the
+entire margin on pipeline intelligence — which is the *least* clinical thing in the
+build — and put the money shot back into clipping. A separate route costs the demo
+screen nothing.
+
+**Render-verified by the executing session** (the authoring environment could not:
+Linux arm64 against macOS-installed `node_modules`, no network to re-fetch
+`@next/swc-linux-arm64-gnu`). `npx tsc --noEmit` had proven the JSON import
+typechecks against the real file, but nothing had rendered it. Now measured:
+
+```
+GET /pipeline -> 200, 25,114 bytes, no error markers
+  "1 of 239 Active Phase 3 programs on the Convoke Program Tracker…"
+  "Has a guideline today · Vortioxetine · CPIC · CYP2D6"
+  "No exact match · 238 programs"
+  "This is a LOWER BOUND on CPIC coverage, not a clinical claim."
+  header renders "Kestrel · pipeline coverage" — no pre-rename string leaked
+```
+
+Demo screen confirmed UNMOVED, with Okafor's red card up and `main` pinned to
+exactly 1280×720:
+
+```
+mainOverflowsX false   mainOverflowsY false
+PRESCRIBE pane  0px over    AUDIT LEDGER 0px over    AUTHORIZATIONS 0px over
+document.title "Kestrel"    "Attest" anywhere in body or title: false
+```
+
+**Standing constraints reaffirmed, not just inherited:** Convoke data is pipeline
+intelligence, NOT clinical evidence. It is never called at runtime (cached file
+only, same as CPIC and FDA), and it must never reach the alert path or the
+WhyDrawer. `join.LIMITATION` stays verbatim and stays on screen — it says the
+name-only join is a lower bound that undercounts, and softening it would be the
+overclaim the whole project exists to avoid.
