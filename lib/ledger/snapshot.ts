@@ -14,6 +14,7 @@ import {
 } from "../pgx/policy";
 import { stableHash } from "./hash";
 import { append, clausesFor, readAll } from "./store";
+import { verify } from "./verify";
 
 /** The source shape is data/policies.json.revision. Do not duplicate its values. */
 export interface SupersedeInput {
@@ -185,7 +186,53 @@ function installOverlays(input: SupersedeInput): void {
   }));
 }
 
+function restoreRevisionState(records: LedgerRecord[]): void {
+  if (activeRevision || records.length === 0 || !verify(records).ok) return;
+  const record = records.findLast((candidate) => candidate.type === "policy.revised");
+  const payload = record ? objectValue(record.payload) : null;
+  if (
+    !record ||
+    !payload ||
+    typeof payload.policyId !== "string" ||
+    typeof payload.clauseId !== "string" ||
+    typeof payload.newVersion !== "string" ||
+    !Array.isArray(payload.affectedScopes) ||
+    !payload.affectedScopes.every((scope) => typeof scope === "string") ||
+    typeof payload.summary !== "string" ||
+    typeof payload.note !== "string" ||
+    typeof payload.versionBefore !== "string" ||
+    typeof payload.versionAfter !== "string" ||
+    typeof payload.entryHashBefore !== "string" ||
+    typeof payload.entryHashAfter !== "string" ||
+    payload.simulated !== true
+  ) {
+    return;
+  }
+  const declared = sourceRevision();
+  const restored: ActiveRevision = {
+    policyId: payload.policyId,
+    clauseId: payload.clauseId,
+    newVersion: payload.newVersion,
+    affectedScopes: payload.affectedScopes as string[],
+    summary: payload.summary,
+    note: payload.note,
+  };
+  if (!sameRevision(restored, declared) || restored.note !== declared.note) return;
+
+  installOverlays(restored);
+  activeRevision = structuredClone(restored);
+  publishedResult = {
+    policyId: restored.policyId,
+    versionBefore: payload.versionBefore,
+    versionAfter: payload.versionAfter,
+    entryHashBefore: payload.entryHashBefore,
+    entryHashAfter: payload.entryHashAfter,
+    record,
+  };
+}
+
 export function supersede(input: SupersedeInput): SupersedeResult {
+  restoreRevisionState(readAll());
   const declared = sourceRevision();
   if (!sameRevision(input, declared)) {
     throw new Error("Supersede input must exactly match data/policies.json.revision");
@@ -229,16 +276,23 @@ export function supersede(input: SupersedeInput): SupersedeResult {
     note: declared.note,
     simulated: true,
   };
-  const record = append(
-    "policy.revised",
-    payload,
-    {
-      id: "attest_policy_registry",
-      name: "Attest policy registry",
-      role: "Automated change control",
-    },
-    clausesFor("policy.revised"),
-  );
+  let record: LedgerRecord;
+  try {
+    record = append(
+      "policy.revised",
+      payload,
+      {
+        id: "attest_policy_registry",
+        name: "Attest policy registry",
+        role: "Automated change control",
+      },
+      clausesFor("policy.revised"),
+    );
+  } catch (error) {
+    setIndexOverlay(null);
+    setPolicyOverlay(null);
+    throw error;
+  }
 
   activeRevision = structuredClone(declared);
   publishedResult = {
@@ -254,6 +308,7 @@ export function supersede(input: SupersedeInput): SupersedeResult {
 
 export function authorizationStatus(): AuthorizationView[] {
   const records = readAll();
+  restoreRevisionState(records);
   const alerts = records.map(alertFromRecord).filter((alert): alert is Alert => alert !== null);
 
   return records.flatMap((record): AuthorizationView[] => {
@@ -302,6 +357,7 @@ export function authorizationStatus(): AuthorizationView[] {
 }
 
 export function activeRevisionStatus(): ActiveRevision | null {
+  restoreRevisionState(readAll());
   return activeRevision ? structuredClone(activeRevision) : null;
 }
 

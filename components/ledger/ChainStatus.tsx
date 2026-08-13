@@ -14,9 +14,11 @@ interface ChainStatusProps {
   verificationError: string | null;
   ephemeral: boolean;
   tamperNotice: TamperNotice | null;
-  busy: "verify" | "tamper" | "reset" | "export" | null;
+  busy: "verify" | "tamper" | "supersede" | "reset" | "export" | null;
+  canSupersede: boolean;
   onVerify: () => void;
   onTamper: () => void;
+  onSupersede: () => void;
   onReset: () => void;
   onExport: () => void;
 }
@@ -31,8 +33,10 @@ export function ChainStatus({
   ephemeral,
   tamperNotice,
   busy,
+  canSupersede,
   onVerify,
   onTamper,
+  onSupersede,
   onReset,
   onExport,
 }: ChainStatusProps) {
@@ -87,15 +91,18 @@ export function ChainStatus({
         </p>
       )}
 
-      <div className="mt-3 grid grid-cols-3 gap-2 font-mono text-[10px]">
+      <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-[10px]">
         <button type="button" onClick={onVerify} disabled={busy !== null} className="rounded border border-white/25 px-2 py-2 text-white hover:bg-white/10 disabled:opacity-40">
           {busy === "verify" ? "Verifying…" : "Verify chain"}
+        </button>
+        <button type="button" onClick={onExport} disabled={busy !== null} className="rounded border border-white/25 px-2 py-2 text-white hover:bg-white/10 disabled:opacity-40">
+          {busy === "export" ? "Exporting…" : "Export package"}
         </button>
         <button type="button" onClick={onTamper} disabled={busy !== null || verification?.total === 0} className="rounded border border-red-400/50 px-2 py-2 text-red-200 hover:bg-red-500/15 disabled:opacity-40">
           {busy === "tamper" ? "Tampering…" : "Tamper a record"}
         </button>
-        <button type="button" onClick={onExport} disabled={busy !== null} className="rounded border border-white/25 px-2 py-2 text-white hover:bg-white/10 disabled:opacity-40">
-          {busy === "export" ? "Exporting…" : "Export package"}
+        <button type="button" onClick={onSupersede} disabled={busy !== null || !canSupersede} className="rounded border border-sky-400/55 bg-sky-500/10 px-2 py-2 text-sky-100 hover:bg-sky-500/20 disabled:opacity-40">
+          {busy === "supersede" ? "Publishing…" : "Publish policy revision"}
         </button>
       </div>
     </div>

@@ -1,13 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { LedgerRecord } from "@/lib/contracts";
-import type { VerificationDetails } from "@/lib/ledger";
+import type { AuthorizationView, LedgerRecord } from "@/lib/contracts";
+import type { ActiveRevision, VerificationDetails } from "@/lib/ledger";
+import { AuthorizationPanel } from "./AuthorizationPanel";
 import { ChainStatus, type TamperNotice } from "./ChainStatus";
 import { RecordRow } from "./RecordRow";
 
 interface LedgerResponse {
   records: LedgerRecord[];
+  authorizations: AuthorizationView[];
+  revision: ActiveRevision | null;
   verify: VerificationDetails;
   ephemeral: boolean;
   error?: string;
@@ -15,11 +18,13 @@ interface LedgerResponse {
 
 export function LedgerPane() {
   const [records, setRecords] = useState<LedgerRecord[]>([]);
+  const [authorizations, setAuthorizations] = useState<AuthorizationView[]>([]);
+  const [revision, setRevision] = useState<ActiveRevision | null>(null);
   const [verification, setVerification] = useState<VerificationDetails | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [ephemeral, setEphemeral] = useState(false);
   const [tamperNotice, setTamperNotice] = useState<TamperNotice | null>(null);
-  const [busy, setBusy] = useState<"verify" | "tamper" | "reset" | "export" | null>(null);
+  const [busy, setBusy] = useState<"verify" | "tamper" | "supersede" | "reset" | "export" | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -27,6 +32,8 @@ export function LedgerPane() {
       const body = (await response.json()) as LedgerResponse;
       if (!response.ok || body.error) throw new Error(body.error ?? "Ledger read failed");
       setRecords(body.records);
+      setAuthorizations(body.authorizations);
+      setRevision(body.revision);
       setVerification(body.verify);
       setEphemeral(body.ephemeral);
       setVerificationError(null);
@@ -94,6 +101,25 @@ export function LedgerPane() {
     }
   }
 
+  async function supersedeNow() {
+    setBusy("supersede");
+    setVerification(null);
+    try {
+      const response = await fetch("/api/evidence/supersede", { method: "POST" });
+      const body = (await response.json()) as { error?: string };
+      if (!response.ok || body.error) {
+        throw new Error(body.error ?? "Policy revision could not be published");
+      }
+      await refresh();
+    } catch (error) {
+      setVerificationError(
+        error instanceof Error ? error.message : "Policy revision could not be published",
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function exportNow() {
     setBusy("export");
     setVerification(null);
@@ -126,11 +152,21 @@ export function LedgerPane() {
         ephemeral={ephemeral}
         tamperNotice={tamperNotice}
         busy={busy}
+        canSupersede={
+          verification?.ok === true &&
+          revision === null &&
+          authorizations.some((authorization) =>
+            authorization.boundTo.scopes.includes("dosing.capecitabine"),
+          )
+        }
         onVerify={() => void verifyNow()}
         onTamper={() => void tamperNow()}
+        onSupersede={() => void supersedeNow()}
         onReset={() => void resetNow()}
         onExport={() => void exportNow()}
       />
+
+      <AuthorizationPanel authorizations={authorizations} revision={revision} />
 
       <div className="min-h-0 flex-1 overflow-hidden px-4 py-2">
         {records.length === 0 ? (
