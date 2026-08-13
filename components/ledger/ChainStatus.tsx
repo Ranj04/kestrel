@@ -43,10 +43,10 @@ export function ChainStatus({
   const broken = verification?.ok === false && verification.firstBrokenSeq !== null;
 
   return (
-    <div className={`border-b px-4 pb-3 pt-4 ${broken ? "border-red-500 bg-red-950/70" : "border-white/15"}`}>
+    <div className={`border-b px-4 pb-3 pt-4 ${broken ? "border-accent" : "border-paper/15"}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="font-mono text-[11px] font-semibold tracking-[0.2em] text-white/65">
+          <h2 className="font-mono text-[11px] font-semibold tracking-[0.2em] text-paper/65">
             AUDIT LEDGER
           </h2>
           {verificationError ? (
@@ -54,16 +54,16 @@ export function ChainStatus({
               VERIFICATION UNAVAILABLE — STATUS UNKNOWN
             </p>
           ) : verification === null ? (
-            <p className="mt-1 font-mono text-xs text-white/55">
+            <p className="mt-1 font-mono text-xs text-paper/55">
               verification pending — no status assumed
             </p>
           ) : broken ? (
-            <p className="mt-1 max-w-md font-mono text-sm font-bold leading-tight text-red-100">
+            <p className="mt-1 font-mono text-lg font-semibold leading-tight text-accent-void">
               CHAIN BROKEN AT RECORD {verification.firstBrokenSeq} — RECORDS{" "}
               {rangeLabel(verification.firstBrokenSeq!, verification.total)} NOT TRUSTWORTHY
             </p>
           ) : (
-            <p className="mt-1 font-mono text-sm font-semibold text-emerald-300">
+            <p className="mt-1 font-mono text-sm font-semibold text-seal-void">
               {verification.total} {verification.total === 1 ? "record" : "records"} · chain intact ✓
             </p>
           )}
@@ -78,7 +78,7 @@ export function ChainStatus({
             type="button"
             onClick={onReset}
             disabled={busy !== null}
-            className="font-mono text-[9px] text-white/35 underline-offset-2 hover:text-white/70 hover:underline disabled:opacity-40"
+            className="font-mono text-[9px] text-paper/35 underline-offset-2 hover:text-paper/70 hover:underline disabled:opacity-40"
           >
             {busy === "reset" ? "resetting…" : "Reset demo"}
           </button>
@@ -86,22 +86,29 @@ export function ChainStatus({
       </div>
 
       {tamperNotice && (
-        <p className="break-flash mt-2 rounded border border-red-400/45 bg-red-500/10 px-2 py-1.5 font-mono text-[10px] leading-tight text-red-100">
+        <p className="break-flash mt-2 rounded border border-accent/45 px-2 py-1.5 font-mono text-[10px] leading-tight text-accent-void">
           {tamperNotice.field} altered · “{tamperNotice.before}” → “{tamperNotice.after}”
         </p>
       )}
 
       <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-[10px]">
-        <button type="button" onClick={onVerify} disabled={busy !== null} className="rounded border border-white/25 px-2 py-2 text-white hover:bg-white/10 disabled:opacity-40">
+        <button type="button" onClick={onVerify} disabled={busy !== null} className="rounded border border-paper/25 px-2 py-2 text-paper hover:bg-paper/10 disabled:opacity-40">
           {busy === "verify" ? "Verifying…" : "Verify chain"}
         </button>
-        <button type="button" onClick={onExport} disabled={busy !== null} className="rounded border border-white/25 px-2 py-2 text-white hover:bg-white/10 disabled:opacity-40">
+        <button type="button" onClick={onExport} disabled={busy !== null} className="rounded border border-paper/25 px-2 py-2 text-paper hover:bg-paper/10 disabled:opacity-40">
           {busy === "export" ? "Exporting…" : "Export package"}
         </button>
-        <button type="button" onClick={onTamper} disabled={busy !== null || verification?.total === 0} className="rounded border border-red-400/50 px-2 py-2 text-red-200 hover:bg-red-500/15 disabled:opacity-40">
+        <button type="button" onClick={onTamper} disabled={busy !== null || verification?.total === 0}
+          // neutral, NOT vermilion. phase5 reserves --accent for the critical
+          // alert and a broken chain; a red button pre-announces the break and
+          // spends the colour that is supposed to mean "this is what went wrong".
+          className="rounded border border-paper/25 px-2 py-2 text-paper hover:bg-paper/10 disabled:opacity-40">
           {busy === "tamper" ? "Tampering…" : "Tamper a record"}
         </button>
-        <button type="button" onClick={onSupersede} disabled={busy !== null || !canSupersede} className="rounded border border-sky-400/55 bg-sky-500/10 px-2 py-2 text-sky-100 hover:bg-sky-500/20 disabled:opacity-40">
+        <button type="button" onClick={onSupersede} disabled={busy !== null || !canSupersede} // superseding is ordinary operations, not an attack — so it gets no alarm
+          // colour at all. sky-* was outside the palette; phase5 allows no colour
+          // that is not already in globals.css.
+          className="rounded border border-paper/25 px-2 py-2 text-paper hover:bg-paper/10 disabled:opacity-40">
           {busy === "supersede" ? "Publishing…" : "Publish policy revision"}
         </button>
       </div>

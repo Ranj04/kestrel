@@ -11,6 +11,13 @@
   --accent: #cf4520;       /* vermilion — the clinical stop */
   --accent-deep: #a8350f;
   --seal: #1f5d4c;         /* forest — cleared / chain intact */
+  /* Void-pane text lifts. NOT new colours in the palette — the same two hues
+     raised one step so they are legible as TEXT on --void. #1f5d4c on #1a1512
+     is ~1.9:1, which is unreadable at 13px. The 4px record rules and every
+     paper-side use keep the exact palette values above. From the design
+     handoff's deviation 5, adopted because it is an accessibility fix. */
+  --seal-void: #57a184;
+  --accent-void: #e2582c;
   --amber: #9a6b12;        /* caution / pended */
   --void: #1a1512;         /* ledger pane ground */
 
@@ -40,6 +47,8 @@
   --color-accent: var(--accent);
   --color-accent-deep: var(--accent-deep);
   --color-seal: var(--seal);
+  --color-seal-void: var(--seal-void);
+  --color-accent-void: var(--accent-void);
   --color-amber: var(--amber);
   --color-void: var(--void);
   --font-display: var(--font-fraunces);
@@ -119,6 +128,15 @@ body {
   35%      { background-color: rgba(207, 69, 32, 0.28); }
 }
 .break-flash { animation: break-flash 0.9s ease-out 2; }
+
+/* phase5 stage 2b — the chain breaking. The rules that used to live HERE hooked
+   Sol's class names (li.break-flash, div.bg-red-950/70) because components/ledger/
+   was not editable at the time. The design import moved that styling into the
+   components themselves, so those selectors matched nothing and are deleted
+   rather than left as dead CSS that looks load-bearing. See RecordRow.tsx and
+   ChainStatus.tsx: 4px --accent rule at full strength, content at 0.6 opacity,
+   no transition (the break must be instant), MISMATCH in place of the tick. */
+
 
 /* WhyDrawer entrance — evidence sliding in over the prescribe pane. */
 @keyframes slide-in {

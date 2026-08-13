@@ -64,10 +64,14 @@ export function RecordRow({ record, verification }: RecordRowProps) {
 
   return (
     <li
-      className={`border-b py-1.5 pl-2 pr-1 font-mono text-[9px] leading-tight transition-colors ${
+      /* Design handoff: a broken row is a 4px vermilion rule plus reduced
+         opacity — no red wash. The 4px rule keeps the EXACT palette value
+         (--accent); only text lifts to --accent-void for legibility on --void.
+         No transition: tampering must be instant or it reads as loading. */
+      className={`border-b py-1.5 pl-2 pr-1 font-mono text-[9px] leading-tight ${
         isBroken
-          ? "break-flash border-b-red-900/60 border-l-4 border-l-red-500 bg-red-950/35"
-          : `border-b-white/10 border-l-4 ${isVerified ? "border-l-emerald-700/70" : "border-l-white/15"}`
+          ? "border-b-paper/10 border-l-4 border-l-accent opacity-60"
+          : `border-b-paper/10 border-l-4 ${isVerified ? "border-l-seal-void/70" : "border-l-paper/15"}`
       }`}
     >
       <button
@@ -79,14 +83,25 @@ export function RecordRow({ record, verification }: RecordRowProps) {
         <div className="flex items-center gap-2">
           <span className="text-white/40">#{record.seq}</span>
           <span className="font-semibold text-white">{record.type}</span>
-          <time className="ml-auto text-white/40">
+          {/* tabular-nums: the mono column only lines up if the digits do */}
+          <time className="ml-auto tabular-nums text-paper/55">
             {new Date(record.occurredAt).toLocaleTimeString([], {
               hour12: false,
               fractionalSecondDigits: 3,
             })}
           </time>
-          <span className={isBroken ? "font-bold text-red-300" : isVerified ? "text-emerald-300" : "text-white/35"}>
-            {isBroken ? "✗" : isVerified ? "✓" : "·"}
+          {/* MISMATCH replaces the tick rather than adding a second icon —
+              one mark per row, and the word says what the tick cannot. */}
+          <span
+            className={
+              isBroken
+                ? "font-medium tracking-[0.12em] text-accent-void"
+                : isVerified
+                  ? "text-seal-void"
+                  : "text-paper/35"
+            }
+          >
+            {isBroken ? "MISMATCH" : isVerified ? "✓" : "·"}
           </span>
         </div>
 
