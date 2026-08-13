@@ -1,9 +1,10 @@
 import JSZip from "jszip";
-import type { LedgerRecord, VerifyResult } from "../contracts";
+import type { AuthorizationView, LedgerRecord, VerifyResult } from "../contracts";
 import { CLAUSE_LABELS } from "../ledger";
 
 export interface InspectionPackageInput {
   records: LedgerRecord[];
+  authorizations: AuthorizationView[];
   verification: VerifyResult;
   generatedAt: string;
 }
@@ -96,6 +97,39 @@ function clinicalEvidenceHtml(records: LedgerRecord[]): string {
     .join("");
 }
 
+function authorizationHtml(input: InspectionPackageInput): string {
+  if (input.authorizations.length === 0) {
+    return "<p>No signed override authorizations are present in this ledger.</p>";
+  }
+  const revision = input.records
+    .filter((record) => record.type === "policy.revised")
+    .map(payloadObject)
+    .at(-1);
+  const affectedScopes = Array.isArray(revision?.affectedScopes)
+    ? revision.affectedScopes.map(String)
+    : [];
+
+  return input.authorizations
+    .map((authorization) => {
+      const superseded = authorization.status === "superseded" && authorization.supersededBy;
+      const reason = superseded
+        ? `<p><strong>Scope collision:</strong> ${escapeHtml(authorization.intersectingScopes.join(", "))}</p>
+           <p><strong>Superseded by:</strong> ${escapeHtml(authorization.supersededBy?.policyId)} v${escapeHtml(authorization.supersededBy?.version)}${revision?.clauseId ? ` · clause ${escapeHtml(revision.clauseId)}` : ""}${revision?.simulated === true ? " · SIMULATED POLICY REVISION" : ""}</p>
+           <p>${escapeHtml(authorization.supersededBy?.summary)}</p>`
+        : revision && authorization.intersectingScopes.length === 0
+          ? `<p><strong>Authorization unaffected:</strong> evidence changed elsewhere; no scope collision with ${escapeHtml(affectedScopes.join(", "))}</p>`
+          : "";
+      return `<article class="authorization ${superseded ? "broken" : "intact"}">
+        <h3>${escapeHtml(authorization.authorizationId)} · ${escapeHtml(authorization.drugName)} · ${escapeHtml(authorization.status.toUpperCase())}</h3>
+        <p><strong>Actor:</strong> ${escapeHtml(authorization.actor.name)} (${escapeHtml(authorization.actor.id)})</p>
+        <p><strong>Bound to:</strong> ${escapeHtml(authorization.boundTo.policyId ?? authorization.boundTo.snapshotId)}${authorization.boundTo.policyVersion ? ` v${escapeHtml(authorization.boundTo.policyVersion)}` : ""} · ${escapeHtml(authorization.boundTo.entryHash)}</p>
+        <p><strong>Current evidence hash:</strong> ${escapeHtml(authorization.currentEntryHash || "unavailable")}</p>
+        ${reason}
+      </article>`;
+    })
+    .join("");
+}
+
 export function inspectionReportHtml(input: InspectionPackageInput): string {
   const status = input.verification.ok
     ? "CHAIN INTACT"
@@ -104,11 +138,13 @@ export function inspectionReportHtml(input: InspectionPackageInput): string {
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Attest inspection report</title>
 <style>
-  *{box-sizing:border-box}body{max-width:980px;margin:0 auto;padding:36px;color:#211c18;background:#fff;font:15px/1.45 Georgia,serif}h1,h2,h3{margin:.3em 0}h1{font-size:28px}h2{border-bottom:2px solid #211c18;padding-bottom:8px}.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}.meta div,.record,.evidence{border:1px solid #cfc6b8;padding:14px}.status-ok{color:#1f5d4c}.status-bad,.broken{border-color:#cf4520!important;color:#7f260e}.record{margin:14px 0;break-inside:avoid}.record header{display:flex;justify-content:space-between;gap:16px}.record time,.hash{font:12px ui-monospace,monospace;overflow-wrap:anywhere}.clauses{font-size:13px}.signature{background:#f3ece0;padding:10px}.signature dl{display:grid;grid-template-columns:180px 1fr;margin:0}.signature dt{font-weight:bold}.signature dd{margin:0}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f7f4ef;padding:10px;font:11px/1.4 ui-monospace,monospace}.evidence{margin:12px 0}.clinical{break-before:page}@media print{body{padding:0}.record,.evidence{page-break-inside:avoid}}
+  *{box-sizing:border-box}body{max-width:980px;margin:0 auto;padding:36px;color:#211c18;background:#fff;font:15px/1.45 Georgia,serif}h1,h2,h3{margin:.3em 0}h1{font-size:28px}h2{border-bottom:2px solid #211c18;padding-bottom:8px}.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}.meta div,.record,.evidence,.authorization{border:1px solid #cfc6b8;padding:14px}.status-ok{color:#1f5d4c}.status-bad,.broken{border-color:#cf4520!important;color:#7f260e}.record,.authorization{margin:14px 0;break-inside:avoid}.record header{display:flex;justify-content:space-between;gap:16px}.record time,.hash{font:12px ui-monospace,monospace;overflow-wrap:anywhere}.clauses{font-size:13px}.signature{background:#f3ece0;padding:10px}.signature dl{display:grid;grid-template-columns:180px 1fr;margin:0}.signature dt{font-weight:bold}.signature dd{margin:0}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f7f4ef;padding:10px;font:11px/1.4 ui-monospace,monospace}.evidence{margin:12px 0}.clinical{break-before:page}@media print{body{padding:0}.record,.evidence,.authorization{page-break-inside:avoid}}
 </style></head><body>
 <header><p>ATTEST · REGULATORY INSPECTION PACKAGE</p><h1>Electronic audit ledger</h1></header>
 <section class="meta"><div><strong>Generated</strong><br>${escapeHtml(input.generatedAt)}</div><div><strong>Records</strong><br>${input.records.length}</div><div class="${input.verification.ok ? "status-ok" : "status-bad"}"><strong>Verification</strong><br>${escapeHtml(status)}<br><small>Checked ${escapeHtml(input.verification.checkedAt)}</small></div></section>
 <p>§11.10(b) inspection copies are included in both human-readable form (this report) and electronic form (<code>ledger.jsonl</code>).</p>
+<h2>Snapshot-bound authorizations</h2>
+${authorizationHtml(input)}
 <h2>Chronological ledger</h2>
 ${input.records.map((record) => recordHtml(record, input.verification.brokenSeqs.includes(record.seq))).join("")}
 <section class="clinical"><h2>Clinical strings and source evidence</h2>${clinicalEvidenceHtml(input.records)}</section>

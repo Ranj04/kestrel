@@ -213,13 +213,20 @@ hazard: unquoted, `cd ~/biopharma hack` runs `cd ~/biopharma` and often **succee
 elsewhere**, which makes every subsequent check report on nothing. Warning added to
 `_context.md`.
 
-## R-14 · OPEN · `next/font/google` fetches at build time
+## R-14 · CLOSED (phase 2) · `next/font/google` fetches at build time
 
 Violates "no network at runtime" if `.next` was never warmed. Mitigated two ways: a real
 fallback stack in `globals.css` (a failure changes the typeface, never the layout), and
 an explicit warm step in the README. **Not fully fixed** — self-hosting the two fonts
 would close it properly and costs ~10 minutes. Recorded rather than done, because the
 mitigation is adequate and the clock is not.
+
+**CLOSED in phase 2, prompted by `.sol/requests/phase2-build-blockers.md`:** the offline
+failure was measured first — `next build` behind a dead proxy (`https_proxy=127.0.0.1:9`)
+exits 1 with "Failed to fetch `Fraunces` from Google Fonts", a hard error, not a
+fallback. The latin woff2 subsets are now vendored in `app/fonts/` (~151 KB total) and
+`app/layout.tsx` loads them with `next/font/local`; the same dead-proxy build now exits
+0 with zero font warnings. The `globals.css` fallback stack is retained.
 
 ## R-15 · OPEN, STRETCH ONLY · no live EHR integration surface
 

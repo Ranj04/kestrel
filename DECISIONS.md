@@ -198,3 +198,16 @@ polls `/api/ledger` every 1s, so ledger-affecting actions on the left appear on
 the right with no event bus and no key-bumping. Override goes through Sol's
 `SignatureModal` (21 CFR 11 fields), never a plain dismiss; switching patients
 clears the response so one patient's card can never sit over another's chart.
+
+## D14 — the build itself must survive no network, so the fonts are vendored
+
+Prompted by `.sol/requests/phase2-build-blockers.md`, measured before fixing:
+`next build` behind a dead proxy exits 1 — `next/font/google` is a hard build
+error offline, not a graceful fallback, and Turbopack warns on the optional
+Bedrock SDK import even with the runtime-variable specifier. Fixes, both
+proven by the same dead-proxy build now exiting 0 with zero warnings: the
+latin woff2 subsets are vendored in `app/fonts/` (~151 KB) behind
+`next/font/local`, and the Bedrock dynamic import carries
+`/* webpackIgnore: true */` with `serverExternalPackages` in `next.config.ts`
+as a one-line second net. Runtime LLM behavior is unchanged — the absent SDK
+still falls through to the next provider (40/40 tests). R-14 closed.

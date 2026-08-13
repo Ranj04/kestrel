@@ -1,4 +1,4 @@
-import { append, clausesFor, readAll, verify } from "@/lib/ledger";
+import { append, authorizationStatus, clausesFor, readAll, verify } from "@/lib/ledger";
 import { buildInspectionPackage } from "@/lib/export";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,8 @@ export async function POST(): Promise<Response> {
     );
     const records = readAll();
     const verification = verify(records);
-    const zip = await buildInspectionPackage({ records, verification, generatedAt });
+    const authorizations = authorizationStatus();
+    const zip = await buildInspectionPackage({ records, authorizations, verification, generatedAt });
     const body = zip.buffer.slice(zip.byteOffset, zip.byteOffset + zip.byteLength) as ArrayBuffer;
     return new Response(body, {
       headers: {

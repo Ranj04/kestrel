@@ -7,6 +7,13 @@ export {
   reset,
 } from "./store";
 export { recordAcceptance, recordOverride } from "./override";
+export {
+  activeRevisionStatus,
+  authorizationStatus,
+  resetSnapshotState,
+  supersede,
+} from "./snapshot";
+export type { ActiveRevision, SupersedeInput } from "./snapshot";
 export { tamper } from "./tamper";
 export { verify, verifyDetailed } from "./verify";
 export type { VerificationDetails } from "./verify";

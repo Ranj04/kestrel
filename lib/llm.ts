@@ -67,15 +67,18 @@ interface BedrockSdk {
 /**
  * Dynamic import so an absent SDK is a fall-through, not a crash. The
  * specifier is a runtime string variable ON PURPOSE: a literal would make
- * tsc resolve the (uninstalled) package and fail, and would let a bundler
- * try to resolve it at build time. Do not add the dependency and do not
- * hand-roll SigV4 — this branch stays inert until Ranjiv has both creds
- * and the SDK.
+ * tsc resolve the (uninstalled) package and fail. The webpackIgnore magic
+ * comment (honored by Turbopack too) stops the bundler from trying to
+ * resolve the expression at build time — without it, `next build` logs a
+ * module-not-found warning for a package that is deliberately optional
+ * (.sol/requests/phase2-build-blockers.md). Do not add the dependency and
+ * do not hand-roll SigV4 — this branch stays inert until Ranjiv has both
+ * creds and the SDK.
  */
 async function loadBedrockSdk(): Promise<BedrockSdk | null> {
   try {
     const specifier: string = "@aws-sdk/client-bedrock-runtime";
-    return (await import(specifier)) as BedrockSdk;
+    return (await import(/* webpackIgnore: true */ specifier)) as BedrockSdk;
   } catch {
     return null;
   }
