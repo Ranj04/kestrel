@@ -26,7 +26,7 @@ export function PatientCard({
           <button
             key={p.patientId}
             onClick={() => onSelect(p.patientId)}
-            className={`flex-1 truncate px-2 py-1.5 font-mono text-[11px] ${
+            className={`flex-1 truncate px-2 py-1 font-mono text-[11px] ${
               p.patientId === patient.patientId
                 ? "bg-ink font-semibold text-paper"
                 : "text-ink-soft hover:bg-line/40"
@@ -37,8 +37,8 @@ export function PatientCard({
         ))}
       </div>
 
-      <div className="px-4 py-2.5">
-        <p className="font-display text-lg leading-tight">
+      <div className="px-4 py-2">
+        <p className="font-display text-base leading-tight">
           {patient.displayName}
           <span className="ml-3 font-mono text-[11px] text-ink-soft">
             MRN {patient.mrn} · {patient.age} {patient.sex}
@@ -50,7 +50,9 @@ export function PatientCard({
           <p className="mt-2 font-mono text-[11px] text-amber">No genotype on file.</p>
         ) : (
           <>
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            {/* R-19: the provenance rides IN the chip row rather than on its own
+                line below it — same string, verbatim, one line of height less. */}
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
               {patient.results.map((r) => (
                 <span
                   key={r.gene}
@@ -61,11 +63,11 @@ export function PatientCard({
                   {r.phenotype && <span className="text-accent-deep">· {r.phenotype}</span>}
                 </span>
               ))}
+              <span className="font-mono text-[10px] text-ink-soft">
+                {/* provenance, verbatim from patients.json `source` */}
+                {[...new Set(patient.results.map((r) => r.source))].join(" · ")}
+              </span>
             </div>
-            <p className="mt-1.5 font-mono text-[10px] text-ink-soft">
-              {/* provenance line, verbatim from patients.json `source` */}
-              {[...new Set(patient.results.map((r) => r.source))].join(" · ")}
-            </p>
           </>
         )}
       </div>

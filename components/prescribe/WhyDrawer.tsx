@@ -55,6 +55,45 @@ export function WhyDrawer({ alert, onClose }: { alert: Alert; onClose: () => voi
         {alert.implication && <Field label="Implication">{alert.implication}</Field>}
         {alert.comments && <Field label="Comments">{alert.comments}</Field>}
 
+        {/* The FDA badge expands HERE — the drawer overlays the pane, so the
+            expansion costs the card no height (R-19).
+            SCRAPED, not cached-and-verified like CPIC: dashed rule and its own
+            label, so it can never read as verified content (_context.md).
+            Every string below is verbatim cell text from data/fda-pgx.json, and
+            source/retrieval/route are the FILE's own fields — nothing here
+            asserts how the page was fetched. ABSENCE IS NOT EVIDENCE: when
+            fdaLabeled is null this whole block is absent, with no note in its
+            place. */}
+        {alert.fdaLabeled && (
+          <div className="mt-3 border border-dashed border-line px-3 py-2">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft">
+              FDA-labeled · scraped source
+            </p>
+            <p className="mt-0.5 font-mono text-[11px]">
+              {alert.fdaLabeled.gene} · {alert.fdaLabeled.drug}
+            </p>
+            {alert.fdaLabeled.rows.map((row) => (
+              <div key={`${row.section}:${row.affected_subgroups}`} className="mt-1.5">
+                <p className="font-mono text-[10px] text-ink-soft">
+                  section {row.section} · affected subgroups: {row.affected_subgroups}
+                </p>
+                <p className="mt-0.5 text-[12px] leading-snug">{row.description}</p>
+              </div>
+            ))}
+            <a
+              href={alert.fdaLabeled.source_url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1.5 block break-all font-mono text-[10px] text-ink-soft underline decoration-line underline-offset-2 hover:text-ink"
+            >
+              {alert.fdaLabeled.source_url}
+            </a>
+            <p className="font-mono text-[10px] text-ink-soft">
+              retrieved {alert.fdaLabeled.retrieved_at} · via {alert.fdaLabeled.via}
+            </p>
+          </div>
+        )}
+
         {alert.guidelineName && (
           <Field label="Guideline">
             {alert.guidelineUrl ? (

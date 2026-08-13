@@ -87,9 +87,20 @@ async function viaBrightData(): Promise<string> {
   return body;
 }
 
+/** Plain GET. NOT a Bright Data integration — the output records `via: "direct"`
+ *  so nothing downstream can describe it as one. Exists so stage 2 can be built
+ *  and verified while a Bright Data zone is still being provisioned (R-20);
+ *  re-running without --direct upgrades the provenance and nothing else. */
+async function viaDirect(): Promise<string> {
+  const res = await fetch(SOURCE_URL, { headers: { "user-agent": "Mozilla/5.0" } });
+  if (!res.ok) throw new Error(`direct fetch ${res.status}`);
+  return res.text();
+}
+
 async function main() {
   const fileArg = process.argv.indexOf("--from-file");
   const fromFile = fileArg !== -1 ? process.argv[fileArg + 1] : null;
+  const direct = process.argv.includes("--direct");
 
   let html: string;
   let via: string;
@@ -97,6 +108,10 @@ async function main() {
     html = readFileSync(fromFile, "utf8");
     via = "file (parser test only — NOT a scrape)";
     console.log(`  reading ${fromFile} — parser test, no network`);
+  } else if (direct) {
+    console.log("  fetching DIRECTLY — this is NOT a Bright Data integration");
+    html = await viaDirect();
+    via = "direct";
   } else {
     console.log(`  fetching via Bright Data zone "${process.env.BRIGHTDATA_ZONE}"…`);
     html = await viaBrightData();

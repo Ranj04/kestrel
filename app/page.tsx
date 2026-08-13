@@ -74,16 +74,19 @@ export default function Home() {
 
   return (
     <main className="flex h-dvh flex-col">
-      <div className="border-b border-line bg-paper-raised px-6 py-1.5 text-center font-mono text-[11px] tracking-wide text-ink-soft">
+      <div className="border-b border-line bg-paper-raised px-6 py-1 text-center font-mono text-[11px] tracking-wide text-ink-soft">
         SYNTHETIC DATA — no real patient information
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-[55fr_45fr]">
         {/* ------------------------------------------------ left: prescribe */}
-        <section className="relative flex min-h-0 flex-col gap-3 overflow-hidden border-r border-line px-6 py-4">
-          <div className="flex items-baseline justify-between">
-            <h1 className="font-mono text-xs tracking-[0.2em] text-ink-soft">PRESCRIBE</h1>
-            <span className="font-display text-sm text-ink-soft">
+        {/* R-19: the prescriber pane overflowed 1280x720 by 150px with Okafor's card up.
+            Vertical rhythm tightened here and in every prescribe component; the
+            recommendation blockquote (19px) was deliberately NOT shrunk. */}
+        <section className="relative flex min-h-0 flex-col gap-1.5 overflow-hidden border-r border-line px-5 py-2.5">
+          <div className="flex items-baseline justify-between leading-none">
+            <h1 className="font-mono text-[10px] tracking-[0.2em] text-ink-soft">PRESCRIBE</h1>
+            <span className="font-display text-[12px] text-ink-soft">
               Attest · pharmacogenomic check
             </span>
           </div>
@@ -95,7 +98,7 @@ export default function Home() {
           {error && <p className="font-mono text-[12px] text-accent-deep">{error}</p>}
 
           {response ? (
-            <div className="flex min-h-0 flex-col gap-2.5">
+            <div className="flex min-h-0 flex-col gap-1.5">
               <AlertCard
                 response={response}
                 patient={patient}

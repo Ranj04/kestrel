@@ -26,6 +26,7 @@ import { WhyDrawer } from "../components/prescribe/WhyDrawer.tsx";
 
 const CPIC_RAW = readFileSync(join(process.cwd(), "data", "cpic", "index.json"), "utf8");
 const POLICY_RAW = readFileSync(join(process.cwd(), "data", "policies.json"), "utf8");
+const FDA_RAW = readFileSync(join(process.cwd(), "data", "fda-pgx.json"), "utf8");
 
 const patient = (id: string): Patient => {
   const p = getPatient(id);
@@ -133,6 +134,115 @@ test("AlertCard absent genotype: Bhattacharya renders the honest amber line, not
     !html.includes("No pharmacogenomic contraindication"),
     "an unrun check must not render as a pass",
   );
+});
+
+// ------------------------------------------------------------- FDA badge
+//
+// THE RULE: the FDA table lists associations, not exclusions. A covered pair
+// gets a badge carrying the FDA's verbatim text; an uncovered pair gets
+// NOTHING — no badge, no grey pill, no "not FDA-labeled", no negative wording
+// of any kind. Both halves are pinned below, because only the pair of them
+// distinguishes "the rule holds" from "the feature never rendered".
+
+test("AlertCard: FDA badge renders for Okafor, INLINE on the CPIC badge row (no new line)", () => {
+  const p = patient("pt_okafor");
+  const response = respond(p, "capecitabine");
+  assert.ok(response.alert?.fdaLabeled, "the alert must carry the FDA association");
+  const html = renderAlertCard(response, p);
+
+  assert.ok(html.includes("FDA-labeled"), "badge renders");
+  // Same row, not a new one: R-19 — the pane is height-constrained and the
+  // badge must cost zero vertical height. If it moves out of the CPIC badge's
+  // own <p>, this segment gains a </p> and the test goes red.
+  const start = html.indexOf("CPIC LEVEL A");
+  const end = html.indexOf("FDA-labeled");
+  assert.ok(start >= 0 && end > start, "badge sits after the CPIC badge");
+  assert.ok(
+    !html.slice(start, end).includes("</p>"),
+    "FDA badge shares the CPIC badge's line — no extra row of height",
+  );
+});
+
+test("WhyDrawer: FDA text renders VERBATIM with section, source url, retrieval and route", () => {
+  const alert = evaluate(patient("pt_okafor"), "capecitabine", "ord_uitest") as Alert;
+  assert.ok(alert.fdaLabeled);
+  const html = renderToStaticMarkup(createElement(WhyDrawer, { alert, onClose: noop }));
+
+  for (const row of alert.fdaLabeled.rows) {
+    // On screen == on the alert == on disk, character for character.
+    assert.ok(html.includes(row.description), "description renders verbatim");
+    assert.ok(FDA_RAW.includes(row.description), "and exists in data/fda-pgx.json");
+    assert.ok(html.includes(row.affected_subgroups), "affected subgroups render verbatim");
+    assert.ok(FDA_RAW.includes(row.affected_subgroups), "and exist in data/fda-pgx.json");
+    assert.ok(html.includes(`section ${row.section}`), "the FDA's section number renders");
+  }
+  assert.ok(
+    html.includes(`href="${alert.fdaLabeled.source_url}"`),
+    "source_url rendered as the value",
+  );
+  assert.ok(html.includes(alert.fdaLabeled.retrieved_at), "retrieval timestamp renders");
+  // Provenance comes from the file's own `via`, so the UI stays true whether
+  // the page was fetched directly or through a proxy (REGISTER R-20).
+  assert.ok(html.includes(`via ${alert.fdaLabeled.via}`), "retrieval route renders from the file");
+  assert.ok(html.includes("scraped"), "scraped content is labelled as scraped, never as verified");
+});
+
+test("WhyDrawer: two FDA rows for CYP2D6/codeine both render — never one of two", () => {
+  const alert = evaluate(patient("pt_reyes"), "codeine", "ord_uitest") as Alert;
+  assert.ok(alert.fdaLabeled);
+  assert.equal(alert.fdaLabeled.rows.length, 2);
+  const html = renderToStaticMarkup(createElement(WhyDrawer, { alert, onClose: noop }));
+  assert.ok(html.includes(alert.fdaLabeled.rows[0].description));
+  assert.ok(html.includes(alert.fdaLabeled.rows[1].description));
+});
+
+/** A REAL critical alert for a pair the FDA has not published: G6PD +
+ *  nitrofurantoin, through the real evaluate() over the real CPIC cache. */
+const g6pdPatient: Patient = {
+  patientId: "pt_synth_g6pd",
+  displayName: "Synthetic G6PD Patient",
+  mrn: "0000-1",
+  age: 50,
+  sex: "X",
+  indication: "FDA absence test",
+  results: [
+    {
+      gene: "G6PD",
+      diplotype: "synthetic",
+      lookup: "Deficient with CNSHA",
+      phenotype: "Deficient with CNSHA",
+      source: "synthetic",
+      reportedAt: "2026-08-13T00:00:00Z",
+    },
+  ],
+};
+
+test("ABSENCE IS NOT EVIDENCE: a pair absent from the FDA table renders NO badge, NO negative", () => {
+  const response = respond(g6pdPatient, "nitrofurantoin");
+  assert.ok(response.alert, "the fixture must raise a real alert, or this proves nothing");
+  assert.equal(response.alert.fdaLabeled, null, "and the FDA has published nothing for it");
+
+  const card = renderAlertCard(response, g6pdPatient);
+  const drawer = renderToStaticMarkup(
+    createElement(WhyDrawer, { alert: response.alert, onClose: noop }),
+  );
+
+  // Positive control first: the SAME components do render a badge when the FDA
+  // has published one — so a green result here is the rule holding, not the
+  // feature silently missing.
+  const okaforCard = renderAlertCard(respond(patient("pt_okafor"), "capecitabine"), patient("pt_okafor"));
+  assert.ok(okaforCard.includes("FDA-labeled"), "positive control: the badge CAN render");
+
+  for (const [name, html] of [
+    ["AlertCard", card],
+    ["WhyDrawer", drawer],
+  ] as const) {
+    // No badge, and no negative claim in any wording — the whole point is that
+    // the table lists associations, not exclusions.
+    assert.ok(!html.includes("FDA-labeled"), `${name}: no badge`);
+    assert.ok(!/FDA/i.test(html), `${name}: the letters FDA do not appear at all`);
+    assert.ok(!/not\s+labeled|no\s+FDA|unlabell?ed|not\s+listed/i.test(html), `${name}: no negative`);
+  }
 });
 
 // ---------------------------------------------------------------- WhyDrawer

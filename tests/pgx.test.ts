@@ -11,12 +11,15 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 // Deterministic paths only: the whole demo must work with no key and no
 // network, so the tests run exactly that configuration.
 delete process.env.ANTHROPIC_API_KEY;
 
 import type { Patient } from "../lib/contracts.ts";
+import { fdaAssociation, loadFdaTable } from "../lib/pgx/fda.ts";
 import * as llm from "../lib/llm.ts";
 import { assess } from "../lib/credibility.ts";
 import { evaluate, severityOf } from "../lib/pgx/evaluate.ts";
@@ -274,4 +277,129 @@ test("resolveDrug: unknown drug resolves to none, never a guess", async () => {
 test("llm wrapper returns null immediately with no key and never throws", async () => {
   assert.equal(await llm.resolveDrug("Xeloda", ["capecitabine"]), null);
   assert.equal(await llm.parseOrder("Xeloda 1250 mg/m2 BID"), null);
+});
+
+// ------------------------------------------------- FDA table: presence only
+//
+// ABSENCE IS NOT EVIDENCE. Every assertion below is either "the FDA's verbatim
+// text came through" or "the answer is null". There is deliberately no test
+// asserting a negative claim, because the code must never be able to make one.
+
+const FDA_RAW = readFileSync(join(process.cwd(), "data", "fda-pgx.json"), "utf8");
+
+test("fdaAssociation: DPYD/capecitabine — case-insensitive on drug, verbatim from disk", () => {
+  // CPIC writes "capecitabine", the FDA writes "Capecitabine". The fold is on
+  // the QUERY only: what comes back is the FDA's own spelling.
+  const hit = fdaAssociation("DPYD", "capecitabine");
+  assert.ok(hit, "the FDA publishes a DPYD/capecitabine association");
+  assert.equal(hit.drug, "Capecitabine", "the FDA's own spelling is preserved");
+  assert.equal(hit.gene, "DPYD");
+  assert.equal(hit.rows.length, 1);
+
+  // Verbatim proof measured against the file, not against the code under test.
+  assert.ok(FDA_RAW.includes(hit.rows[0].description), "description exists in data/fda-pgx.json");
+  assert.ok(
+    FDA_RAW.includes(hit.rows[0].affected_subgroups),
+    "affected_subgroups exists in data/fda-pgx.json",
+  );
+  assert.match(hit.rows[0].description, /^Results in higher adverse reaction risk/);
+  assert.equal(hit.rows[0].affected_subgroups, "intermediate or poor metabolizers");
+  assert.equal(hit.rows[0].section, 1);
+
+  // Provenance is read out of the file, never asserted in code (R-20): the
+  // scrape can be re-run through a proxy and only `via` moves.
+  assert.equal(hit.source_url, JSON.parse(FDA_RAW).source_url);
+  assert.equal(hit.retrieved_at, JSON.parse(FDA_RAW).retrieved_at);
+  assert.equal(hit.via, JSON.parse(FDA_RAW).via);
+
+  // Same answer whatever case the caller supplies.
+  assert.deepEqual(fdaAssociation("DPYD", "Capecitabine"), hit);
+  assert.deepEqual(fdaAssociation("DPYD", "  CAPECITABINE  "), hit);
+});
+
+test("fdaAssociation: CYP2D6/codeine carries BOTH FDA rows — never one picked from two", () => {
+  const hit = fdaAssociation("CYP2D6", "codeine");
+  assert.ok(hit);
+  // The FDA publishes an ultrarapid row (section 1) and a poor-metabolizer row
+  // (section 2). Returning "the first" would make the citation depend on file
+  // order — the same defect the D6 guard exists for.
+  assert.equal(hit.rows.length, 2);
+  assert.deepEqual(
+    hit.rows.map((r) => r.section),
+    [1, 2],
+  );
+  for (const row of hit.rows) {
+    assert.ok(FDA_RAW.includes(row.description), "each description exists in data/fda-pgx.json");
+    assert.ok(FDA_RAW.includes(row.affected_subgroups), "each subgroup exists on disk");
+  }
+  assert.match(hit.rows[0].affected_subgroups, /ultrarapid/);
+  assert.match(hit.rows[1].affected_subgroups, /poor/);
+  assert.notEqual(hit.rows[0].description, hit.rows[1].description);
+});
+
+test("fdaAssociation: absent pair -> null. The table lists associations, not exclusions", () => {
+  // Neither the gene nor the drug of this pair is in the table.
+  assert.equal(fdaAssociation("G6PD", "nitrofurantoin"), null);
+  assert.ok(!FDA_RAW.includes('"gene": "G6PD"'), "G6PD is genuinely absent from the table");
+
+  // The join is on the PAIR, not on either half: CYP2C19 has rows, capecitabine
+  // has a row, and the FDA publishes no association between the two. A gene-only
+  // or drug-only match would put a badge on a pair the FDA never published.
+  assert.ok(FDA_RAW.includes('"gene": "CYP2C19"'), "CYP2C19 does appear in the table");
+  assert.ok(FDA_RAW.includes('"drug": "Capecitabine"'), "Capecitabine does appear in the table");
+  assert.equal(fdaAssociation("CYP2C19", "capecitabine"), null);
+
+  assert.equal(fdaAssociation("DPYD", "florblexin"), null);
+});
+
+test("loadFdaTable: a missing file yields null and never throws — the demo survives without it", () => {
+  assert.equal(loadFdaTable("/nonexistent/fda-pgx.json"), null);
+  assert.ok(loadFdaTable(), "and the real file does load, so the null above is not vacuous");
+});
+
+test("evaluate: fdaLabeled populated for both demo pairs, verbatim", () => {
+  const okafor = evaluate(patient("pt_okafor"), "capecitabine", "ord_fda1");
+  assert.ok(okafor?.fdaLabeled, "Okafor's alert carries the FDA association");
+  assert.equal(okafor.fdaLabeled.gene, "DPYD");
+  assert.equal(okafor.fdaLabeled.drug, "Capecitabine");
+  assert.ok(FDA_RAW.includes(okafor.fdaLabeled.rows[0].description));
+
+  const reyes = evaluate(patient("pt_reyes"), "codeine", "ord_fda2");
+  assert.ok(reyes?.fdaLabeled, "Reyes's alert carries the FDA association");
+  assert.equal(reyes.fdaLabeled.rows.length, 2);
+  assert.notEqual(
+    reyes.fdaLabeled.rows[0].description,
+    okafor.fdaLabeled.rows[0].description,
+    "two alerts carry two different FDA texts — not one hardcoded badge",
+  );
+});
+
+/** A REAL CPIC alert whose (gene, drug) the FDA has not published: G6PD +
+ *  nitrofurantoin, raised through the real evaluate() over the real cache. */
+const g6pdPatient: Patient = {
+  patientId: "pt_synth_g6pd",
+  displayName: "Synthetic G6PD Patient",
+  mrn: "0000-1",
+  age: 50,
+  sex: "X",
+  indication: "FDA absence test",
+  results: [
+    {
+      gene: "G6PD",
+      diplotype: "synthetic",
+      lookup: "Deficient with CNSHA",
+      phenotype: "Deficient with CNSHA",
+      source: "synthetic",
+      reportedAt: "2026-08-13T00:00:00Z",
+    },
+  ],
+};
+
+test("evaluate: an alert the FDA table does not cover gets fdaLabeled null, not a negative", () => {
+  const alert = evaluate(g6pdPatient, "nitrofurantoin", "ord_fda3");
+  assert.ok(alert, "the fixture must actually raise an alert, or it proves nothing");
+  assert.equal(alert.severity, "critical");
+  assert.equal(alert.fdaLabeled, null);
+  // And the pair really is absent from the file, measured against disk.
+  assert.ok(!FDA_RAW.toLowerCase().includes("nitrofurantoin"));
 });

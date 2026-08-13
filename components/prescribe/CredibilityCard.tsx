@@ -23,21 +23,23 @@ const CELLS: { control: Credibility["requiredControl"]; label: string }[] = [
 
 export function CredibilityCard({ credibility }: { credibility: Credibility }) {
   return (
-    <div className="border border-line bg-paper-raised px-4 py-2.5">
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft">
+    <div className="border border-line bg-paper-raised px-3 py-2">
+      {/* R-19: label and context share one line — both render in full, the card
+          just stopped spending a second line on the pair. */}
+      <p className="font-mono text-[10px] uppercase leading-tight tracking-[0.1em] text-ink-soft">
         FDA credibility assessment
-      </p>
-      <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">
-        context of use: {credibility.contextOfUse}
+        <span className="ml-1.5 normal-case tracking-normal">
+          context of use: {credibility.contextOfUse}
+        </span>
       </p>
 
-      <div className="mt-2 flex items-start gap-4">
-        <table className="shrink-0 border-collapse font-mono text-[10px]">
+      <div className="mt-1.5 flex items-start gap-4">
+        <table className="shrink-0 border-collapse font-mono text-[10px] leading-tight">
           <thead>
             <tr>
               <th />
-              <th className="px-2 pb-1 font-normal text-ink-soft">cons. low</th>
-              <th className="px-2 pb-1 font-normal text-ink-soft">cons. high</th>
+              <th className="px-2 pb-0.5 font-normal text-ink-soft">cons. low</th>
+              <th className="px-2 pb-0.5 font-normal text-ink-soft">cons. high</th>
             </tr>
           </thead>
           <tbody>
@@ -52,7 +54,7 @@ export function CredibilityCard({ credibility }: { credibility: Credibility }) {
                   return (
                     <td
                       key={col}
-                      className={`border border-line px-2 py-1 text-center ${
+                      className={`border border-line px-2 py-0.5 text-center ${
                         lit
                           ? cell.control === "human-signature"
                             ? "bg-accent font-semibold text-paper-raised"
@@ -86,9 +88,12 @@ export function CredibilityCard({ credibility }: { credibility: Credibility }) {
               {credibility.requiredControl}
             </span>
           </p>
-          <p className="mt-1 text-ink-soft">{credibility.rationale}</p>
         </div>
       </div>
+
+      {/* R-19: the rationale renders in full, but across the WHOLE card instead of
+          in the narrow column beside the grid — same words, ~40px fewer. */}
+      <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">{credibility.rationale}</p>
     </div>
   );
 }

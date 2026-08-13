@@ -12,6 +12,7 @@
 import { randomBytes } from "node:crypto";
 import type { Alert, EvidenceSnapshot, GeneResult, Patient, Severity } from "../contracts";
 import { stableHash } from "../ledger/hash";
+import { fdaAssociation } from "./fda";
 import { getIndex, type CpicEntry, type CpicIndex } from "./index";
 import { matchCoverage, type PolicyClause } from "./policy";
 
@@ -125,6 +126,10 @@ function buildAlert(
     guidelineUrl: entry.guideline_url ?? null,
     citations: entry.citations ?? [],
     sourceUrl: entry._source, // the exact CPIC API row, never reconstructed
+    // Secondary evidence, queried on the SAME (gene, drug) the card names.
+    // null when the FDA has published no association — which renders nothing at
+    // all, because the table lists associations and not exclusions.
+    fdaLabeled: fdaAssociation(entry.gene, entry.drug),
     coverage: matched?.coverage ?? null,
     snapshot,
     raisedAt: new Date().toISOString(),

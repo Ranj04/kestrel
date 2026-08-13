@@ -97,6 +97,34 @@ export interface EvidenceSnapshot {
   capturedAt: string;
 }
 
+/** One row of the FDA Table of Pharmacogenetic Associations, VERBATIM from
+ *  data/fda-pgx.json (scraped once at author time, never fetched at runtime). */
+export interface FdaLabelRow {
+  /** the FDA's own section number for the row — their grouping, not ours */
+  section: number;
+  affected_subgroups: string; // VERBATIM cell text
+  description: string; // VERBATIM cell text
+}
+
+/** The FDA's published association for one (gene, drug) pair.
+ *
+ *  ABSENCE IS NOT EVIDENCE: the table lists associations, not exclusions. A
+ *  pair with no row gets `fdaLabeled: null` and renders NOTHING — never
+ *  "not FDA-labeled", never a grey absent-state pill. `null` means the FDA has
+ *  not published an association, which is not a statement that none exists. */
+export interface FdaAssociation {
+  gene: string;
+  drug: string; // the FDA's own spelling ("Capecitabine"), verbatim
+  /** EVERY row the table carries for this pair — the FDA publishes two for
+   *  (CYP2D6, codeine). Never one picked out of several. */
+  rows: FdaLabelRow[];
+  source_url: string; // from the file, so the drawer can cite it
+  retrieved_at: string; // from the file, ISO
+  /** how the page was retrieved, read from the file's own field and rendered
+   *  as-is. Never hardcoded — the UI must stay true if the scrape is re-run. */
+  via: string;
+}
+
 /** Every string field below is VERBATIM from data/cpic/index.json. */
 export interface Alert {
   alertId: string;
@@ -119,6 +147,10 @@ export interface Alert {
   guidelineUrl: string | null;
   citations: Citation[];
   sourceUrl: string; // the exact CPIC API row this came from
+  /** the FDA's own association for this exact (gene, drug), or null. null is
+   *  rendered as NOTHING — see FdaAssociation. Additive: nothing clinical
+   *  depends on it, and it is never part of the recommendation. */
+  fdaLabeled: FdaAssociation | null;
   coverage: Coverage | null;
   snapshot: EvidenceSnapshot;
   raisedAt: string;

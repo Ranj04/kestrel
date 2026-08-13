@@ -69,11 +69,11 @@ export function AlertCard({
           : "rise border border-amber bg-amber/10 text-ink"
       }
     >
-      <div className={critical ? "px-5 py-4" : "px-4 py-3"}>
+      <div className={critical ? "px-5 py-3" : "px-4 py-2.5"}>
         <p
           className={
             critical
-              ? "font-mono text-xl font-semibold tracking-[0.06em]"
+              ? "font-mono text-lg font-semibold tracking-[0.06em]"
               : "font-mono text-sm font-semibold tracking-[0.06em] text-amber"
           }
         >
@@ -81,19 +81,26 @@ export function AlertCard({
         </p>
 
         <p
-          className={`mt-2 font-mono text-[12px] ${critical ? "text-paper-raised/85" : "text-ink-soft"}`}
+          className={`mt-1 font-mono text-[12px] ${critical ? "text-paper-raised/85" : "text-ink-soft"}`}
         >
           {alert.gene} · {alert.phenotype ?? alert.diplotype} · {alert.drugName}
         </p>
 
-        {/* VERBATIM from data/cpic/index.json — surrounding quotes are chrome, the string is untouched */}
+        {/* VERBATIM from data/cpic/index.json — surrounding quotes are chrome, the string is
+            untouched. 19px is the read-from-twenty-feet size and is NOT negotiable for height:
+            everything around it shrank instead (R-19). */}
         <blockquote
-          className={`mt-3 font-display leading-snug ${critical ? "text-[19px]" : "text-[16px]"}`}
+          className={`mt-2.5 font-display leading-snug ${critical ? "text-[19px]" : "text-[16px]"}`}
         >
           &ldquo;{alert.recommendation}&rdquo;
         </blockquote>
 
-        <p className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[11px]">
+        {/* ONE row: CPIC's own badge, its classification, and — only when the FDA has
+            published an association for this exact (gene, drug) — the FDA badge INLINE
+            beside them. It costs no vertical height and it expands into WhyDrawer, which
+            overlays. ABSENCE IS NOT EVIDENCE: no association means nothing renders here,
+            never "not FDA-labeled" and never a greyed-out pill. */}
+        <p className="mt-2 flex flex-wrap items-center gap-2 font-mono text-[11px]">
           {alert.cpicLevelA && (
             <span
               className={
@@ -106,23 +113,37 @@ export function AlertCard({
             </span>
           )}
           {alert.classification && <span>{alert.classification} recommendation</span>}
+          {alert.fdaLabeled && (
+            <button
+              type="button"
+              onClick={onWhy}
+              title="FDA Table of Pharmacogenetic Associations — open the verbatim entry"
+              className={
+                critical
+                  ? "border border-dashed border-paper-raised/60 px-1.5 py-0.5 font-semibold hover:bg-paper-raised/10"
+                  : "border border-dashed border-ink/40 px-1.5 py-0.5 font-semibold hover:bg-ink/5"
+              }
+            >
+              FDA-labeled ⓘ
+            </button>
+          )}
         </p>
 
         {alert.implication && (
           <p
-            className={`mt-2.5 text-[13px] leading-snug ${critical ? "text-paper-raised/90" : "text-ink-soft"}`}
+            className={`mt-2 text-[13px] leading-snug ${critical ? "text-paper-raised/90" : "text-ink-soft"}`}
           >
             {alert.implication}
           </p>
         )}
 
-        <div className="mt-3.5 flex items-center gap-3">
+        <div className="mt-2 flex items-center gap-3">
           <button
             onClick={onWhy}
             className={
               critical
-                ? "border border-paper-raised/70 px-3 py-1.5 font-mono text-[12px] hover:bg-paper-raised/10"
-                : "border border-ink/40 px-3 py-1.5 font-mono text-[12px] hover:bg-ink/5"
+                ? "border border-paper-raised/70 px-3 py-1 font-mono text-[12px] hover:bg-paper-raised/10"
+                : "border border-ink/40 px-3 py-1 font-mono text-[12px] hover:bg-ink/5"
             }
           >
             Why this?
@@ -132,8 +153,8 @@ export function AlertCard({
             disabled={recorded !== null}
             className={
               critical
-                ? "bg-paper-raised px-3 py-1.5 font-mono text-[12px] font-semibold text-accent-deep hover:bg-paper disabled:opacity-50"
-                : "bg-ink px-3 py-1.5 font-mono text-[12px] font-semibold text-paper hover:bg-ink/80 disabled:opacity-50"
+                ? "bg-paper-raised px-3 py-1 font-mono text-[12px] font-semibold text-accent-deep hover:bg-paper disabled:opacity-50"
+                : "bg-ink px-3 py-1 font-mono text-[12px] font-semibold text-paper hover:bg-ink/80 disabled:opacity-50"
             }
           >
             {/* human-signature gates the dismissal behind Sol's 21 CFR 11 modal — never a plain dismiss */}
