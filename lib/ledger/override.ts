@@ -10,6 +10,7 @@ interface OverrideInput {
   alertId: string;
   orderId: string;
   actor: Actor;
+  printedName?: string;
   rationale: string;
   signatureMeaning: "authorship" | "review" | "approval";
   suggestedRationale?: string | null;
@@ -47,7 +48,7 @@ export function recordOverride(input: OverrideInput): LedgerRecord {
   const payload: OverridePayload = {
     alertId: input.alertId,
     orderId: input.orderId,
-    printedName: input.actor.name,
+    printedName: input.printedName ?? input.actor.name,
     signedAt: new Date().toISOString(),
     signatureMeaning: input.signatureMeaning,
     rationale: input.rationale,

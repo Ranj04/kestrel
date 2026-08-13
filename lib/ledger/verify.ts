@@ -1,13 +1,13 @@
 import type { LedgerRecord, VerifyResult } from "../contracts";
 import { GENESIS_PREV_HASH, hashRecord } from "./hash";
-import { readState } from "./store";
+import { readState, type LedgerReadState } from "./store";
 
-export function verify(records?: LedgerRecord[]): VerifyResult {
-  // Always touch current storage on this call; callers may still supply an explicit chain.
-  const freshState = readState();
-  const state = records
-    ? { records, totalLines: records.length, unreadableAt: null }
-    : freshState;
+export interface VerificationDetails extends VerifyResult {
+  expectedHash: string | null;
+  foundHash: string | null;
+}
+
+function verifyState(state: LedgerReadState): VerifyResult {
   let firstBroken: number | null = null;
 
   for (let index = 0; index < state.records.length; index += 1) {
@@ -43,5 +43,29 @@ export function verify(records?: LedgerRecord[]): VerifyResult {
     firstBrokenSeq: firstBroken,
     brokenSeqs,
     checkedAt: new Date().toISOString(),
+  };
+}
+
+export function verify(records?: LedgerRecord[]): VerifyResult {
+  // Always touch current storage on this call; callers may still supply an explicit chain.
+  const freshState = readState();
+  const state = records
+    ? { records, totalLines: records.length, unreadableAt: null }
+    : freshState;
+  return verifyState(state);
+}
+
+/** Fresh verification plus the stored and recomputed digests for the UI's first break. */
+export function verifyDetailed(): VerificationDetails {
+  const state = readState();
+  const result = verifyState(state);
+  const first =
+    result.firstBrokenSeq === null
+      ? undefined
+      : state.records.find((record) => record.seq === result.firstBrokenSeq);
+  return {
+    ...result,
+    expectedHash: first ? hashRecord(first) : null,
+    foundHash: first?.hash ?? null,
   };
 }

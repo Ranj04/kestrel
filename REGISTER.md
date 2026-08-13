@@ -342,3 +342,29 @@ helper in non-React server code) as a React hook — and the one remaining findi
 **Still open:** the gate text in `BUILD_ORDER.md` / `CLAUDE.md` still says
 `npx next lint | grep -c…`; neither file is Fable-owned, so the wording fix — assert on
 `npx eslint .`'s exit code, never a piped grep count — still needs its owner.
+
+## R-18 · OPEN · `PRESCRIBER` in `app/page.tsx` duplicates `DEMO_ACTORS` in the prescribe route
+
+The demo actor (`dr_chen` / "Dr. Chen" / "Attending, Oncology") is declared in
+two Fable-owned files: the route's `DEMO_ACTORS` shim and the page's
+`PRESCRIBER` constant handed to Sol's `SignatureModal`. They agree today; nothing
+asserts they keep agreeing.
+
+**Not fixed here deliberately.** Exporting the constant from the route into a
+client component pulls a server module into the client bundle; a shared
+`lib/actors.ts` for one three-field demo constant is speculative structure the
+day before the demo. Both sites carry a comment naming the other.
+
+**Fix:** if a second actor ever appears, hoist the map into a tiny shared module.
+
+## R-19 · OPEN · 1280x720 no-scroll is sized by construction, not yet observed
+
+The layout is height-capped (`h-dvh`, `overflow-hidden` on both panes, compact
+type scale) and every demo state renders through the real route handler in
+tests — but this sandbox cannot bind a port (`next start` denied), so nobody has
+SEEN the four demo states at 1280x720. If a pane overflows, content clips
+silently rather than scrolls, which is the honest failure mode but still a
+failure.
+
+**Fix:** executing session loads the four demo rows at exactly 1280x720 and
+looks. If Okafor's card clips, shrink `AlertCard`'s blockquote from 19px first.

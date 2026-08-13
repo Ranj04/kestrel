@@ -1,30 +1,138 @@
+"use client";
+
 /**
- * Two-pane shell. LEFT is Fable's, RIGHT is Sol's. The ownership split and the
- * visual split are the same line -- see .sol/prompts/_context.md.
+ * Two-pane shell. LEFT is Fable's (components/prescribe/), RIGHT is Sol's
+ * <LedgerPane /> — imported, never reimplemented. Sol's pane polls /api/ledger
+ * every 1s, so ledger-affecting actions on the left show up on the right with
+ * no event bus and no key-bumping.
  *
- * Fable: replace the left placeholder with components/prescribe/.
- * Sol:   export <LedgerPane /> from components/ledger/index.tsx; it drops in here.
- *
- * Target 1280x720 with NO scrolling on either pane during the demo.
+ * Target: 1280x720, NO scrolling on either pane during the demo.
  */
+import { useState } from "react";
+import { LedgerPane, SignatureModal } from "@/components/ledger";
+import { AlertCard } from "@/components/prescribe/AlertCard";
+import { CoverageLine } from "@/components/prescribe/CoverageLine";
+import { CredibilityCard } from "@/components/prescribe/CredibilityCard";
+import { OrderForm } from "@/components/prescribe/OrderForm";
+import { PatientCard } from "@/components/prescribe/PatientCard";
+import { WhyDrawer } from "@/components/prescribe/WhyDrawer";
+import patientFile from "@/data/patients.json";
+import type { Actor, LedgerRecord, Patient, PrescribeResponse } from "@/lib/contracts";
+
+const PATIENTS: Patient[] = patientFile.patients;
+
+/** DEMO SHIM — mirrors DEMO_ACTORS in app/api/prescribe/route.ts. */
+const PRESCRIBER: Actor = { id: "dr_chen", name: "Dr. Chen", role: "Attending, Oncology" };
+
 export default function Home() {
+  const [patientId, setPatientId] = useState(PATIENTS[0].patientId);
+  const [response, setResponse] = useState<PrescribeResponse | null>(null);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [whyOpen, setWhyOpen] = useState(false);
+  const [signOpen, setSignOpen] = useState(false);
+  const [recorded, setRecorded] = useState<LedgerRecord | null>(null);
+
+  const patient = PATIENTS.find((p) => p.patientId === patientId) ?? PATIENTS[0];
+
+  function selectPatient(id: string) {
+    // A response belongs to exactly one patient — switching MUST clear it, or
+    // Okafor's red card could sit on screen over Lindqvist's chart.
+    setPatientId(id);
+    setResponse(null);
+    setRecorded(null);
+    setError(null);
+    setWhyOpen(false);
+    setSignOpen(false);
+  }
+
+  async function placeOrder(drugRaw: string) {
+    setPending(true);
+    setError(null);
+    setWhyOpen(false);
+    setRecorded(null);
+    try {
+      const res = await fetch("/api/prescribe", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ patientId, drugRaw, orderedBy: PRESCRIBER.id }),
+      });
+      const body = (await res.json()) as PrescribeResponse & { error?: string };
+      if (!res.ok || body.error) throw new Error(body.error ?? "prescribe failed");
+      setResponse(body);
+    } catch (e) {
+      setResponse(null);
+      setError(e instanceof Error ? e.message : "prescribe failed");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  // Coverage sits on PrescribeResponse as well as on Alert: two demo patients
+  // have NO alert and their determination must still render. Under, never above.
+  const coverage = response ? (response.alert ? response.alert.coverage : response.coverage) : null;
+
   return (
     <main className="flex h-dvh flex-col">
-      <div className="border-b border-line bg-paper-raised px-6 py-2 font-mono text-xs tracking-wide text-ink-soft">
+      <div className="border-b border-line bg-paper-raised px-6 py-1.5 text-center font-mono text-[11px] tracking-wide text-ink-soft">
         SYNTHETIC DATA — no real patient information
       </div>
 
-      <div className="grid flex-1 grid-cols-[55fr_45fr] overflow-hidden">
-        <section className="overflow-hidden border-r border-line p-6">
-          <h1 className="font-mono text-xs tracking-[0.2em] text-ink-soft">PRESCRIBE</h1>
-          <p className="mt-8 text-ink-soft">components/prescribe/ — Fable</p>
+      <div className="grid min-h-0 flex-1 grid-cols-[55fr_45fr]">
+        {/* ------------------------------------------------ left: prescribe */}
+        <section className="relative flex min-h-0 flex-col gap-3 overflow-hidden border-r border-line px-6 py-4">
+          <div className="flex items-baseline justify-between">
+            <h1 className="font-mono text-xs tracking-[0.2em] text-ink-soft">PRESCRIBE</h1>
+            <span className="font-display text-sm text-ink-soft">
+              Attest · pharmacogenomic check
+            </span>
+          </div>
+
+          <PatientCard patients={PATIENTS} selectedId={patientId} onSelect={selectPatient} />
+
+          <OrderForm onSubmit={(raw) => void placeOrder(raw)} pending={pending} response={response} />
+
+          {error && <p className="font-mono text-[12px] text-accent-deep">{error}</p>}
+
+          {response ? (
+            <div className="flex min-h-0 flex-col gap-2.5">
+              <AlertCard
+                response={response}
+                patient={patient}
+                onWhy={() => setWhyOpen(true)}
+                onOverride={() => setSignOpen(true)}
+                recorded={recorded}
+              />
+              {coverage && <CoverageLine coverage={coverage} />}
+              <CredibilityCard credibility={response.credibility} />
+            </div>
+          ) : (
+            !error && (
+              <p className="font-mono text-[12px] text-ink-soft/70">
+                Select a patient and place an order to run the check.
+              </p>
+            )
+          )}
+
+          {whyOpen && response?.alert && (
+            <WhyDrawer alert={response.alert} onClose={() => setWhyOpen(false)} />
+          )}
         </section>
 
-        <section className="overflow-hidden bg-void p-6 text-paper">
-          <h1 className="font-mono text-xs tracking-[0.2em] opacity-60">AUDIT LEDGER</h1>
-          <p className="mt-8 opacity-60">components/ledger/ — Sol</p>
+        {/* ------------------------------------------------ right: Sol's ledger */}
+        <section className="min-h-0 overflow-hidden">
+          <LedgerPane />
         </section>
       </div>
+
+      {signOpen && response?.alert && (
+        <SignatureModal
+          alert={response.alert}
+          actor={PRESCRIBER}
+          onClose={() => setSignOpen(false)}
+          onRecorded={(record) => setRecorded(record)}
+        />
+      )}
     </main>
   );
 }

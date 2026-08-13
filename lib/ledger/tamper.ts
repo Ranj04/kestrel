@@ -66,14 +66,21 @@ function findScalar(value: unknown, path = "payload"): LocatedValue | null {
 }
 
 function altered(value: Scalar): Scalar {
-  if (typeof value === "string") return `${value} [altered]`;
+  if (typeof value === "string") {
+    if (value.length === 0) return "x";
+    const index = value.search(/[A-Za-z](?![\s\S]*[A-Za-z])/);
+    if (index === -1) return value.slice(0, -1) + (value.endsWith("0") ? "1" : "0");
+    const character = value[index];
+    const replacement = character === "z" ? "y" : character === "Z" ? "Y" : String.fromCharCode(character.charCodeAt(0) + 1);
+    return value.slice(0, index) + replacement + value.slice(index + 1);
+  }
   if (typeof value === "number") return value + 1;
   if (typeof value === "boolean") return !value;
   return "[altered]";
 }
 
 function alterRecord(record: LedgerRecord): TamperResult {
-  let located = findScalar(record.payload);
+  const located = findScalar(record.payload);
   if (!located) {
     record.payload = { original: record.payload, altered: true };
     return {

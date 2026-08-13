@@ -1,13 +1,12 @@
 export { canonicalJson, GENESIS_PREV_HASH, hashRecord, stableHash } from "./hash";
+export { clausesFor, CLAUSE_LABELS, CLAUSES_BY_EVENT } from "./clauses";
 export {
   append,
-  CLAUSE_LABELS,
-  CLAUSES_BY_EVENT,
-  clausesFor,
   ephemeral,
   readAll,
   reset,
 } from "./store";
 export { recordAcceptance, recordOverride } from "./override";
 export { tamper } from "./tamper";
-export { verify } from "./verify";
+export { verify, verifyDetailed } from "./verify";
+export type { VerificationDetails } from "./verify";

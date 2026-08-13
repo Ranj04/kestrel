@@ -163,3 +163,38 @@ venue's project key 403s on `gpt-4o-mini` — its model list is {gpt-4-turbo,
 gpt-4.1-nano, gpt-5.3-codex, gpt-5.4} and the gpt-5.x reasoning models reject
 `max_tokens`/`temperature: 0` (`ATTEST_OPENAI_MODEL` overrides it;
 `ATTEST_BEDROCK_MODEL` and `ATTEST_LLM_MODEL` cover the other two branches).
+
+## D13 — phase 2 UI: the components render the response, never restate it
+
+The left pane is five components under `components/prescribe/`. All of them are
+props-in, markup-out — no fetching, no derivation of clinical values. The one
+fetch lives in `app/page.tsx`, and the objects it hands down render verbatim:
+`recommendation`, `implication`, `comments`, and `clauseText` pass through with
+no slice/replace/case-change/truncation (a long string grows the card), and the
+`WhyDrawer` "source record" href is `alert.sourceUrl` — the value on the alert,
+never a rebuilt URL. `phenotype` renders; `lookup` never goes on screen.
+`tests/ui.test.ts` pins all of this with react-dom/server against alerts from
+the real `evaluate()` over the real cache, and each clinical assertion greps the
+string back out of the data file — so "renders verbatim" is measured against
+disk, not against the code under test. Both directions were mutation-probed:
+truncating the recommendation and rebuilding the sourceUrl each turned exactly
+the named test red.
+
+Three UI states for "no alert", because their meanings differ and only one is a
+clearance: green "No pharmacogenomic contraindication" only when a genotype on
+file went through the check; amber "No genotype on file" for Bhattacharya (an
+unrun check must not render as a pass); grey "No CPIC guideline found" when the
+drug never resolved. Headers like "DO NOT PRESCRIBE" are Fable-authored severity
+labels — UI chrome, not clinical text; every clinical sentence is CPIC's.
+
+The FDA credibility grid lights cells by `requiredControl` mapped back onto the
+2x2: auto -> low/low, human-signature -> high/high, and human-review lights BOTH
+review cells — a medium x medium assessment collapses onto the review
+anti-diagonal, and picking one corner would claim an axis value the assessment
+did not make.
+
+The right pane is Sol's `<LedgerPane />` imported from `components/ledger` — it
+polls `/api/ledger` every 1s, so ledger-affecting actions on the left appear on
+the right with no event bus and no key-bumping. Override goes through Sol's
+`SignatureModal` (21 CFR 11 fields), never a plain dismiss; switching patients
+clears the response so one patient's card can never sit over another's chart.

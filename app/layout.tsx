@@ -1,17 +1,28 @@
 import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const fraunces = Fraunces({
+/**
+ * Fonts are VENDORED in app/fonts/ (latin subsets, fetched from Google Fonts
+ * at author time) and loaded with next/font/local: `next build` must succeed
+ * with no network — next/font/google fetches at build time and fails the
+ * whole build offline (.sol/requests/phase2-build-blockers.md, R-14).
+ */
+const fraunces = localFont({
+  src: "./fonts/fraunces-latin-var.woff2", // variable: wght 100-900, opsz, SOFT
   variable: "--font-fraunces",
-  subsets: ["latin"],
-  axes: ["opsz", "SOFT"],
+  weight: "100 900",
+  display: "swap",
 });
 
-const plexMono = IBM_Plex_Mono({
+const plexMono = localFont({
+  src: [
+    { path: "./fonts/ibm-plex-mono-latin-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/ibm-plex-mono-latin-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/ibm-plex-mono-latin-600.woff2", weight: "600", style: "normal" },
+  ],
   variable: "--font-plex-mono",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
