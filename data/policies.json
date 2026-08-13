@@ -1,0 +1,90 @@
+{
+  "note": "SYNTHETIC — fictional payer coverage policy authored for a hackathon demo. Not a real coverage document from any plan. Clause text is written to be structurally realistic, not copied from any payer.",
+  "payer": "Meridian Health Plan",
+  "policies": [
+    {
+      "policyId": "PA-ONC-014",
+      "title": "Prior Authorization: Fluoropyrimidine Chemotherapy",
+      "version": "2024.1",
+      "effectiveDate": "2024-03-01",
+      "drugs": ["capecitabine", "fluorouracil"],
+      "clauses": [
+        {
+          "clauseId": "PA-ONC-014.1",
+          "text": "Requests for fluoropyrimidine therapy require documentation of DPYD genotype results obtained prior to the first administered dose. Requests submitted without a documented DPYD result will be pended for additional information.",
+          "criterion": { "type": "genotype_required", "gene": "DPYD" },
+          "scopes": ["coverage.capecitabine", "testing.dpyd"]
+        },
+        {
+          "clauseId": "PA-ONC-014.2",
+          "text": "For members with a DPYD result indicating absent dihydropyrimidine dehydrogenase activity (poor metabolizer), standard-dose fluoropyrimidine therapy is not covered. Reduced-dose therapy may be authorized when accompanied by a documented plan for early therapeutic drug monitoring.",
+          "criterion": {
+            "type": "phenotype_restriction",
+            "gene": "DPYD",
+            "lookup": "Poor Metabolizer",
+            "outcome": "deny_standard_dose",
+            "alternative": "Reduced starting dose with documented therapeutic drug monitoring"
+          },
+          "scopes": ["dosing.capecitabine", "coverage.capecitabine"]
+        },
+        {
+          "clauseId": "PA-ONC-014.3",
+          "text": "For members with a DPYD result indicating reduced activity (intermediate metabolizer), therapy is covered at a reduced starting dose consistent with current published prescribing guidance.",
+          "criterion": {
+            "type": "phenotype_restriction",
+            "gene": "DPYD",
+            "lookup": "Intermediate Metabolizer",
+            "outcome": "approve_with_conditions"
+          },
+          "scopes": ["dosing.capecitabine", "coverage.capecitabine"]
+        },
+        {
+          "clauseId": "PA-ONC-014.4",
+          "text": "For members with a DPYD result indicating normal activity, fluoropyrimidine therapy is covered per standard plan benefit without additional review.",
+          "criterion": {
+            "type": "phenotype_restriction",
+            "gene": "DPYD",
+            "lookup": "Normal Metabolizer",
+            "outcome": "approve"
+          },
+          "scopes": ["coverage.capecitabine"]
+        }
+      ]
+    },
+    {
+      "policyId": "PA-PAIN-007",
+      "title": "Prior Authorization: Codeine-Containing Analgesics",
+      "version": "2023.4",
+      "effectiveDate": "2023-09-15",
+      "drugs": ["codeine"],
+      "clauses": [
+        {
+          "clauseId": "PA-PAIN-007.1",
+          "text": "For members with a CYP2D6 result indicating ultrarapid metabolism, codeine-containing analgesics are not covered due to risk of life-threatening opioid toxicity. Non-codeine analgesic alternatives are covered without prior authorization.",
+          "criterion": {
+            "type": "phenotype_restriction",
+            "gene": "CYP2D6",
+            "lookup": "Ultrarapid Metabolizer",
+            "outcome": "deny",
+            "alternative": "Non-codeine analgesic (covered without prior authorization)"
+          },
+          "scopes": ["coverage.codeine", "dosing.codeine"]
+        },
+        {
+          "clauseId": "PA-PAIN-007.2",
+          "text": "For all other CYP2D6 phenotypes, codeine-containing analgesics are covered per standard plan benefit.",
+          "criterion": { "type": "phenotype_restriction", "gene": "CYP2D6", "outcome": "approve" },
+          "scopes": ["coverage.codeine"]
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "note": "Fired by POST /api/evidence/supersede. Simulates a routine payer policy update — the kind that happens constantly and that nobody goes back to re-check prior authorizations against.",
+    "policyId": "PA-ONC-014",
+    "newVersion": "2024.2",
+    "affectedScopes": ["dosing.capecitabine"],
+    "summary": "Reduced-dose authorization now additionally requires documented DPD phenotype testing, not genotype alone.",
+    "clauseId": "PA-ONC-014.2"
+  }
+}

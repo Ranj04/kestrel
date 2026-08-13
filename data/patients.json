@@ -1,0 +1,71 @@
+{
+  "note": "SYNTHETIC — no real patient data. Genotypes are hand-authored to match CPIC lookup keys exactly. Run `npm run verify` after caching CPIC to confirm every lookup below still resolves; a single character of drift silently disables an alert.",
+  "patients": [
+    {
+      "patientId": "pt_okafor",
+      "displayName": "Maya Okafor",
+      "mrn": "4417-2",
+      "age": 61,
+      "sex": "F",
+      "indication": "Stage III colorectal adenocarcinoma, adjuvant therapy",
+      "results": [
+        {
+          "gene": "DPYD",
+          "diplotype": "c.1905+1G>A/c.1905+1G>A",
+          "lookup": "Poor Metabolizer",
+          "source": "PharmCAT v3.2.0 (synthetic VCF)",
+          "reportedAt": "2026-07-28T16:40:00Z"
+        }
+      ]
+    },
+    {
+      "patientId": "pt_reyes",
+      "displayName": "Daniel Reyes",
+      "mrn": "8823-9",
+      "age": 34,
+      "sex": "M",
+      "indication": "Post-operative pain, ORIF right distal radius",
+      "results": [
+        {
+          "gene": "CYP2D6",
+          "diplotype": "*1/*2x2",
+          "lookup": "Ultrarapid Metabolizer",
+          "source": "PharmCAT v3.2.0 (synthetic VCF, outside call)",
+          "reportedAt": "2026-06-02T11:15:00Z"
+        }
+      ]
+    },
+    {
+      "patientId": "pt_lindqvist",
+      "displayName": "Ana Lindqvist",
+      "mrn": "5106-4",
+      "age": 47,
+      "sex": "F",
+      "indication": "Stage II colon adenocarcinoma, adjuvant therapy",
+      "results": [
+        {
+          "gene": "DPYD",
+          "diplotype": "Reference/Reference",
+          "lookup": "Normal Metabolizer",
+          "source": "PharmCAT v3.2.0 (synthetic VCF)",
+          "reportedAt": "2026-08-04T09:05:00Z"
+        }
+      ]
+    },
+    {
+      "patientId": "pt_bhattacharya",
+      "displayName": "Ravi Bhattacharya",
+      "mrn": "6390-1",
+      "age": 58,
+      "sex": "M",
+      "indication": "Metastatic colorectal adenocarcinoma",
+      "results": []
+    }
+  ],
+  "demoRoles": {
+    "pt_okafor": "THE MONEY SHOT. capecitabine -> critical, 'Avoid use of 5-fluorouracil...'",
+    "pt_reyes": "codeine -> critical. Proves it is not one hardcoded case.",
+    "pt_lindqvist": "capecitabine -> NO ALERT. Same drug, different patient. Proves it is not a red-screen generator. Do not cut this one.",
+    "pt_bhattacharya": "No genotype on file. capecitabine -> coverage 'pended' citing PA-ONC-014.1. The most common real prior-auth outcome, and nearly free."
+  }
+}

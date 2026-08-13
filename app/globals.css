@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/* Archival case-file palette, carried over from Paperwork Advocate.
+   A regulatory audit product should look like a case file, not a dashboard. */
+:root {
+  --paper: #f3ece0;
+  --paper-raised: #faf6ee;
+  --ink: #211c18;
+  --ink-soft: #6b6258;
+  --line: #d8cdbb;
+  --accent: #cf4520;       /* vermilion — the clinical stop */
+  --accent-deep: #a8350f;
+  --seal: #1f5d4c;         /* forest — cleared / chain intact */
+  --amber: #9a6b12;        /* caution / pended */
+  --void: #1a1512;         /* ledger pane ground */
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-seal: var(--seal);
+  --color-amber: var(--amber);
+  --color-void: var(--void);
+  --font-display: var(--font-fraunces);
+  --font-mono: var(--font-plex-mono);
+}
+
+body {
+  color: var(--ink);
+  font-family: var(--font-fraunces), Georgia, serif;
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 33px,
+    rgba(33, 28, 24, 0.035) 34px
+  );
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -10%, rgba(207, 69, 32, 0.07), transparent 60%),
+    radial-gradient(ellipse 90% 60% at 90% 110%, rgba(31, 93, 76, 0.06), transparent 55%);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise { opacity: 0; animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+/* The chain breaking. Used once, and it needs to read from across the room. */
+@keyframes break-flash {
+  0%, 100% { background-color: transparent; }
+  35%      { background-color: rgba(207, 69, 32, 0.28); }
+}
+.break-flash { animation: break-flash 0.9s ease-out 2; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise { animation: none; opacity: 1; }
+  .break-flash { animation: none; }
+}

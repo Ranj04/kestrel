@@ -1,0 +1,155 @@
+#!/usr/bin/env node
+/**
+ * Preflight. Run this the moment the CPIC cache lands, and again any time an
+ * alert mysteriously stops firing.
+ *
+ *     npm run verify
+ *
+ * It answers one question: do the three data files actually agree with each
+ * other? The failure this exists to catch is a `lookup` string in patients.json
+ * that does not match CPIC character for character -- because that failure is
+ * silent. No error, no warning, the alert just never fires, and you lose an
+ * hour to it on the clock.
+ */
+import { readFileSync, existsSync } from "node:fs";
+
+const ok = (m) => console.log(`  \x1b[32mok\x1b[0m    ${m}`);
+const bad = (m) => { console.log(`  \x1b[31mFAIL\x1b[0m  ${m}`); failures++; };
+const info = (m) => console.log(`        \x1b[2m${m}\x1b[0m`);
+let failures = 0;
+
+const read = (p) => JSON.parse(readFileSync(p, "utf8"));
+
+
+// --- 4a-bis positive control -------------------------------------------------
+// `npm run verify -- --prove` corrupts one lookup in memory and asserts this
+// checker reports a FAILURE. A checker that cannot fail is not evidence of
+// anything, and this one guards the single silent failure in the data layer.
+const PROVE = process.argv.includes("--prove");
+
+console.log("\nattest preflight\n");
+
+// ---------------------------------------------------------------- 1. files
+if (!existsSync("data/cpic/index.json")) {
+  bad("data/cpic/index.json missing");
+  info("run: python3 scripts/cache_cpic.py");
+  console.log("\nnothing else can be checked until the cache exists.\n");
+  process.exit(1);
+}
+const index = read("data/cpic/index.json");
+ok(`data/cpic/index.json — ${Object.keys(index).length} drugs`);
+
+const { patients } = read("data/patients.json");
+ok(`data/patients.json — ${patients.length} patients`);
+if (PROVE) {
+  patients.find((p) => p.patientId === "pt_okafor").results[0].lookup = "Poor Metabolizerr";
+  console.log("        \x1b[2m--prove: corrupted pt_okafor DPYD lookup on purpose\x1b[0m");
+}
+
+const policyFile = read("data/policies.json");
+const clauseCount = policyFile.policies.reduce((n, p) => n + p.clauses.length, 0);
+ok(`data/policies.json — ${policyFile.policies.length} policies, ${clauseCount} clauses`);
+
+// ------------------------------------------- 2. do patient lookups resolve?
+console.log("\ngenotype lookups resolve against CPIC");
+const DEMO = [
+  ["pt_okafor", "capecitabine", "DPYD", "critical"],
+  ["pt_reyes", "codeine", "CYP2D6", "critical"],
+  ["pt_lindqvist", "capecitabine", "DPYD", "none"],
+];
+
+for (const [pid, drug, gene, expect] of DEMO) {
+  const p = patients.find((x) => x.patientId === pid);
+  if (!p) { bad(`${pid} not in patients.json`); continue; }
+  const r = p.results.find((x) => x.gene === gene);
+  if (!r) { bad(`${pid} has no ${gene} result`); continue; }
+
+  const entries = index[drug.toLowerCase()]?.[gene];
+  if (!entries) {
+    bad(`no CPIC entries for ${drug} / ${gene}`);
+    info(`genes present for ${drug}: ${Object.keys(index[drug.toLowerCase()] ?? {}).join(", ") || "NONE"}`);
+    continue;
+  }
+
+  const hit = entries.find(
+    (e) => String(e.lookup).trim().toLowerCase() === r.lookup.trim().toLowerCase(),
+  );
+  if (!hit) {
+    bad(`${pid}: lookup "${r.lookup}" does not match any CPIC entry for ${drug}/${gene}`);
+    info(`CPIC offers: ${[...new Set(entries.map((e) => JSON.stringify(e.lookup)))].join(" | ")}`);
+    info("fix the lookup string in data/patients.json to match one of those exactly");
+    continue;
+  }
+
+  const text = String(hit.recommendation ?? "");
+  const severity = /avoid/i.test(text)
+    ? "critical"
+    : /no indication to change|standard dosing|label-recommended/i.test(text)
+      ? "none"
+      : "caution";
+
+  if (severity !== expect) {
+    bad(`${pid} + ${drug}: expected ${expect}, derived ${severity}`);
+    info(`"${text.slice(0, 120)}"`);
+  } else {
+    ok(`${pid} + ${drug} — ${hit.lookup} — ${severity}`);
+    info(`"${text.slice(0, 96)}${text.length > 96 ? "…" : ""}"`);
+    info(`${hit.classification ?? "?"} · Level A: ${hit.cpic_level_a} · ${(hit.citations ?? []).length} citation(s)`);
+  }
+}
+
+// ------------------------------------------------ 3. policy clauses resolve
+console.log("\npolicy clauses reference genotypes that exist");
+for (const pol of policyFile.policies) {
+  for (const c of pol.clauses) {
+    const crit = c.criterion ?? {};
+    if (crit.type !== "phenotype_restriction" || !crit.lookup) continue;
+    const drug = pol.drugs.find((d) => index[d.toLowerCase()]?.[crit.gene]);
+    if (!drug) { bad(`${c.clauseId}: no CPIC data for ${crit.gene} on any of ${pol.drugs.join("/")}`); continue; }
+    const entries = index[drug.toLowerCase()][crit.gene];
+    const hit = entries.some(
+      (e) => String(e.lookup).trim().toLowerCase() === String(crit.lookup).trim().toLowerCase(),
+    );
+    hit
+      ? ok(`${c.clauseId} — ${crit.gene} "${crit.lookup}"`)
+      : bad(`${c.clauseId}: "${crit.lookup}" not a CPIC lookup for ${crit.gene}/${drug}`);
+  }
+}
+
+// -------------------------------------------------------- 4. scopes overlap
+console.log("\nsupersede beat will actually discriminate");
+const rev = policyFile.revision;
+const affected = new Set(rev.affectedScopes);
+const byPolicy = Object.fromEntries(
+  policyFile.policies.map((p) => [
+    p.policyId,
+    [...new Set(p.clauses.flatMap((c) => c.scopes))],
+  ]),
+);
+const hitPolicies = Object.entries(byPolicy).filter(([, s]) => s.some((x) => affected.has(x)));
+const missPolicies = Object.entries(byPolicy).filter(([, s]) => !s.some((x) => affected.has(x)));
+
+hitPolicies.length
+  ? ok(`revision hits: ${hitPolicies.map(([id]) => id).join(", ")}`)
+  : bad("revision hits nothing — the superseded authorization will never appear");
+missPolicies.length
+  ? ok(`revision spares: ${missPolicies.map(([id]) => id).join(", ")}`)
+  : bad("revision hits EVERYTHING — nothing survives, so selective invalidation proves nothing");
+
+// ------------------------------------------------------------------- done
+if (PROVE) {
+  const caught = failures > 0;
+  console.log(
+    caught
+      ? "\n\x1b[32mPROVE OK\x1b[0m — a corrupted lookup is reported as a failure. This checker can fail.\n"
+      : "\n\x1b[31mPROVE FAILED\x1b[0m — a corrupted lookup was NOT caught. This preflight is vacuous; do not trust a pass from it.\n",
+  );
+  process.exit(caught ? 0 : 1);
+}
+
+console.log(
+  failures === 0
+    ? "\n\x1b[32mPASS\x1b[0m — data layer is consistent. Build on it.\n"
+    : `\n\x1b[31m${failures} FAILURE(S)\x1b[0m — fix these before writing feature code.\n`,
+);
+process.exit(failures === 0 ? 0 : 1);
