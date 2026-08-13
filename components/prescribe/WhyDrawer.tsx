@@ -37,8 +37,9 @@ export function WhyDrawer({ alert, onClose }: { alert: Alert; onClose: () => voi
 
       {/* internal scroll only if a long CPIC string demands it; the pane itself never scrolls */}
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
-        {/* VERBATIM from data/cpic/index.json */}
-        <blockquote className="mt-3 border-l-2 border-accent pl-3 font-display text-[17px] leading-snug">
+        {/* VERBATIM from data/cpic/index.json — text-lg resolves to --step-1, the same
+            step the recommendation carries on the card (phase5 stage 1). */}
+        <blockquote className="mt-3 border-l-2 border-accent pl-3 font-display text-lg leading-snug">
           &ldquo;{alert.recommendation}&rdquo;
         </blockquote>
 

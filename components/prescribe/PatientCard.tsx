@@ -59,8 +59,11 @@ export function PatientCard({
                   className="border border-line bg-paper px-2 py-0.5 font-mono text-[11px]"
                 >
                   <span className="font-semibold">{r.gene}</span> {r.diplotype}{" "}
-                  {/* display name only; diplotype already shown covers HLA-style null phenotypes */}
-                  {r.phenotype && <span className="text-accent-deep">· {r.phenotype}</span>}
+                  {/* display name only; diplotype already shown covers HLA-style null phenotypes.
+                      Weight, not colour: vermilion is reserved for the critical alert and a broken
+                      chain (phase5 stage 1) — a chart chip is neither, and a NORMAL metabolizer
+                      rendered red would be a false signal. */}
+                  {r.phenotype && <span className="font-semibold">· {r.phenotype}</span>}
                 </span>
               ))}
               <span className="font-mono text-[10px] text-ink-soft">

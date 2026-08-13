@@ -95,7 +95,9 @@ export default function Home() {
 
           <OrderForm onSubmit={(raw) => void placeOrder(raw)} pending={pending} response={response} />
 
-          {error && <p className="font-mono text-[12px] text-accent-deep">{error}</p>}
+          {/* amber, not vermilion: a fetch failure is a caution, and --accent is reserved
+              for the critical alert and a broken chain (phase5 stage 1). */}
+          {error && <p className="font-mono text-[12px] text-amber">{error}</p>}
 
           {response ? (
             <div className="flex min-h-0 flex-col gap-1.5">

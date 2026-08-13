@@ -65,7 +65,7 @@ export function AlertCard({
     <div
       className={
         critical
-          ? "rise border-2 border-accent-deep bg-accent text-paper-raised shadow-[0_10px_30px_rgba(168,53,15,0.35)]"
+          ? "rise border-2 border-accent-deep bg-accent text-paper-raised"
           : "rise border border-amber bg-amber/10 text-ink"
       }
     >
@@ -87,10 +87,10 @@ export function AlertCard({
         </p>
 
         {/* VERBATIM from data/cpic/index.json — surrounding quotes are chrome, the string is
-            untouched. 19px is the read-from-twenty-feet size and is NOT negotiable for height:
-            everything around it shrank instead (R-19). */}
+            untouched. text-lg resolves to --step-1: the read-from-twenty-feet size, NOT
+            negotiable for height — everything around it shrank instead (R-19, phase5 stage 1). */}
         <blockquote
-          className={`mt-2.5 font-display leading-snug ${critical ? "text-[19px]" : "text-[16px]"}`}
+          className={`mt-2.5 font-display leading-snug ${critical ? "text-lg" : "text-base"}`}
         >
           &ldquo;{alert.recommendation}&rdquo;
         </blockquote>

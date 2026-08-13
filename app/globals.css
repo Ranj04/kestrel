@@ -13,6 +13,22 @@
   --seal: #1f5d4c;         /* forest — cleared / chain intact */
   --amber: #9a6b12;        /* caution / pended */
   --void: #1a1512;         /* ledger pane ground */
+
+  /* THE TYPE SCALE (phase5 stage 1). Five steps, perfect-fourth ratio, and
+     nothing outside it. Everything on screen is one of these five sizes:
+       step--1  mono metadata, clause tags, hashes
+       step-0   body
+       step-1   the CPIC recommendation — the sentence that matters
+       step-2   card headline
+       step-3   DO NOT PRESCRIBE
+     The named Tailwind text utilities are remapped onto these steps in the
+     @theme block below, so existing markup resolves onto the scale without
+     class churn. */
+  --step--1: 0.833rem;
+  --step-0: 1rem;
+  --step-1: 1.333rem;
+  --step-2: 1.777rem;
+  --step-3: 2.369rem;
 }
 
 @theme inline {
@@ -28,6 +44,41 @@
   --color-void: var(--void);
   --font-display: var(--font-fraunces);
   --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Named text utilities resolve to the five steps — nothing in between.
+     xs/sm collapse onto step--1 and lg/xl onto step-1 deliberately: a size
+     that is not one of the five steps does not exist. Small type carries
+     more leading; big type is set tight. */
+  --text-xs: var(--step--1);
+  --text-xs--line-height: 1.45;
+  --text-sm: var(--step--1);
+  --text-sm--line-height: 1.45;
+  --text-base: var(--step-0);
+  --text-base--line-height: 1.5;
+  --text-lg: var(--step-1);
+  --text-lg--line-height: 1.3;
+  --text-xl: var(--step-1);
+  --text-xl--line-height: 1.3;
+  --text-2xl: var(--step-2);
+  --text-2xl--line-height: 1.2;
+  --text-3xl: var(--step-3);
+  --text-3xl--line-height: 1.1;
+  --text-4xl: var(--step-3);
+  --text-4xl--line-height: 1.1;
+
+  /* THE SPACING RHYTHM: an 8px base — 8 / 16 / 24 / 40 / 64 — plus 2px and
+     4px half-steps for intra-block leading (a label sitting 8px off its own
+     value would blow the 720px height budget; see R-19). The off-rhythm
+     integer keys are snapped onto the menu here (3 -> 8px, 5 -> 16px), so
+     `px-3`/`p-5` in existing markup land on the rhythm without class churn.
+     Fractional keys (1.5, 2.5) cannot be theme keys — a dot is not a valid
+     custom-property ident — and are snapped in the utilities layer below. */
+  --spacing-3: 0.5rem;
+  --spacing-5: 1rem;
+
+  /* Separation is a 1px --line rule and whitespace, never a shadow.
+     shadow-2xl is the only shadow utility in use; it now renders nothing. */
+  --shadow-2xl: 0 0 0 0 rgb(0 0 0 / 0);
 }
 
 body {
@@ -37,25 +88,24 @@ body {
      if a woff2 ever goes missing the layout holds and only the typeface
      changes. Never a blank screen. */
   font-family: var(--font-fraunces), Iowan Old Style, Palatino, Georgia, serif;
+  /* Fraunces is a variable font with an opsz axis: optical sizing is what
+     makes the serif read commissioned rather than defaulted. Explicit, so
+     nothing upstream can quietly pin it off. */
+  font-optical-sizing: auto;
   background-color: var(--paper);
+  /* Ruled-paper texture, pitched to the 8px rhythm (4 x 8 = 32px). */
   background-image: repeating-linear-gradient(
     to bottom,
     transparent,
-    transparent 33px,
-    rgba(33, 28, 24, 0.035) 34px
+    transparent 31px,
+    rgba(33, 28, 24, 0.035) 32px
   );
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    radial-gradient(ellipse 120% 80% at 50% -10%, rgba(207, 69, 32, 0.07), transparent 60%),
-    radial-gradient(ellipse 90% 60% at 90% 110%, rgba(31, 93, 76, 0.06), transparent 55%);
-}
+/* phase5 stage 1: the vermilion/forest radial washes that used to sit under
+   the page (body::before) are gone. Colour discipline — --accent appears for
+   the critical alert and a broken chain, nowhere else, and an ambient tint
+   is "somewhere else". The ruled texture above stays; it is the paper. */
 
 @keyframes rise {
   from { opacity: 0; transform: translateY(14px); }
@@ -81,4 +131,21 @@ body::before {
   .rise { animation: none; opacity: 1; }
   .break-flash { animation: none; }
   .slide-in { animation: none; }
+}
+
+/* Fractional spacing keys snapped onto the rhythm (see the @theme note:
+   a dot cannot appear in a custom-property name, so these cannot be theme
+   keys). 1.5 folds down onto the 4px half-step, 2.5 onto the 8px base.
+   Same cascade layer as the generated utilities, declared later, so these
+   win at equal specificity. Only the utilities actually in use are listed —
+   extend the list if a new fractional key ever appears. */
+@layer utilities {
+  .px-1\.5 { padding-inline: 0.25rem; }
+  .py-1\.5 { padding-block: 0.25rem; }
+  .mt-1\.5 { margin-top: 0.25rem; }
+  .ml-1\.5 { margin-left: 0.25rem; }
+  .gap-1\.5 { gap: 0.25rem; }
+  .px-2\.5 { padding-inline: 0.5rem; }
+  .py-2\.5 { padding-block: 0.5rem; }
+  .mt-2\.5 { margin-top: 0.5rem; }
 }
