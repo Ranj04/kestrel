@@ -1,8 +1,8 @@
 {
  "note": "Scraped from the FDA Table of Pharmacogenetic Associations via Bright Data. Verbatim cell text only — no summarisation, no paraphrase. Absence from this table is NOT evidence of absence: it lists associations, not exclusions.",
  "source_url": "https://www.fda.gov/medical-devices/precision-medicine/table-pharmacogenetic-associations",
- "retrieved_at": "2026-08-13T21:11:08.057Z",
- "via": "direct",
+ "retrieved_at": "2026-08-13T22:18:05.551Z",
+ "via": "brightdata",
  "associations": [
   {
    "gene": "HLA-B",
