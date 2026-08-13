@@ -72,6 +72,13 @@ export default function Home() {
   // have NO alert and their determination must still render. Under, never above.
   const coverage = response ? (response.alert ? response.alert.coverage : response.coverage) : null;
 
+  // phase5 stage 2a: a critical alert owns the ENTIRE prescribing pane. The
+  // vermilion field below is absolute inset-0 (z-10); the patient card rides
+  // ABOVE it dimmed (z-20) so its tabs remain the demo's way out of the state,
+  // the order form stays mounted BENEATH it — visibly blocked; and the alert
+  // content (z-20) reclaims the covered form's flow height via -mt-14.
+  const critical = response?.alert?.severity === "critical";
+
   return (
     <main className="flex h-dvh flex-col">
       <div className="border-b border-line bg-paper-raised px-6 py-1 text-center font-mono text-[11px] tracking-wide text-ink-soft">
@@ -91,16 +98,35 @@ export default function Home() {
             </span>
           </div>
 
-          <PatientCard patients={PATIENTS} selectedId={patientId} onSelect={selectPatient} />
+          {/* recedes behind the field when critical — dimmed, NOT unmounted; kept
+              above the field (z-20) so the patient tabs stay clickable: switching
+              patients is the only exit from a critical state and must survive it. */}
+          <div className={critical ? "relative z-20 opacity-40" : undefined}>
+            <PatientCard patients={PATIENTS} selectedId={patientId} onSelect={selectPatient} />
+          </div>
 
-          <OrderForm onSubmit={(raw) => void placeOrder(raw)} pending={pending} response={response} />
+          {/* recedes BENEATH the field when critical: still mounted, still dimmed,
+              physically unreachable — the software blocking the order is the point. */}
+          <div className={critical ? "opacity-40" : undefined}>
+            <OrderForm onSubmit={(raw) => void placeOrder(raw)} pending={pending} response={response} />
+          </div>
 
           {/* amber, not vermilion: a fetch failure is a caution, and --accent is reserved
               for the critical alert and a broken chain (phase5 stage 1). */}
           {error && <p className="font-mono text-[12px] text-amber">{error}</p>}
 
+          {/* the vermilion field: edge to edge, instant — no easing, nothing appended
+              below a form. AlertCard's critical branch is the content that sits on it. */}
+          {critical && <div aria-hidden className="absolute inset-0 z-10 bg-accent/95" />}
+
           {response ? (
-            <div className="flex min-h-0 flex-col gap-1.5">
+            <div
+              className={
+                critical
+                  ? "relative z-20 -mt-14 flex min-h-0 flex-1 flex-col"
+                  : "flex min-h-0 flex-col gap-1.5"
+              }
+            >
               <AlertCard
                 response={response}
                 patient={patient}
@@ -108,8 +134,23 @@ export default function Home() {
                 onOverride={() => setSignOpen(true)}
                 recorded={recorded}
               />
-              {coverage && <CoverageLine coverage={coverage} />}
-              <CredibilityCard credibility={response.credibility} />
+              {critical ? (
+                // Coverage stays UNDER the clinical block, by contract. On the
+                // field it needs its own paper ground to stay legible.
+                <div className="mt-auto flex min-h-0 flex-col gap-1.5 pt-1">
+                  {coverage && (
+                    <div className="border border-line bg-paper-raised px-4 py-0.5">
+                      <CoverageLine coverage={coverage} />
+                    </div>
+                  )}
+                  <CredibilityCard credibility={response.credibility} />
+                </div>
+              ) : (
+                <>
+                  {coverage && <CoverageLine coverage={coverage} />}
+                  <CredibilityCard credibility={response.credibility} />
+                </>
+              )}
             </div>
           ) : (
             !error && (

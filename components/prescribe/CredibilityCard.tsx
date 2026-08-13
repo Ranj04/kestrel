@@ -23,7 +23,7 @@ const CELLS: { control: Credibility["requiredControl"]; label: string }[] = [
 
 export function CredibilityCard({ credibility }: { credibility: Credibility }) {
   return (
-    <div className="border border-line bg-paper-raised px-3 py-2">
+    <div className="border border-line bg-paper-raised px-3 py-1">
       {/* R-19: label and context share one line — both render in full, the card
           just stopped spending a second line on the pair. */}
       <p className="font-mono text-[10px] uppercase leading-tight tracking-[0.1em] text-ink-soft">
@@ -93,7 +93,7 @@ export function CredibilityCard({ credibility }: { credibility: Credibility }) {
 
       {/* R-19: the rationale renders in full, but across the WHOLE card instead of
           in the narrow column beside the grid — same words, ~40px fewer. */}
-      <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">{credibility.rationale}</p>
+      <p className="mt-0.5 text-[11px] leading-tight text-ink-soft">{credibility.rationale}</p>
     </div>
   );
 }
