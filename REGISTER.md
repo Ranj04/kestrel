@@ -293,7 +293,7 @@ sweep cannot silently go vacuous — through the real `evaluate()`/`getIndex()` 
 null for every one with exactly one logged conflict each. The multi-gene join widening
 stays future work.
 
-## R-17 · OPEN · the per-phase lint gate is a FALSE GREEN — `next lint` does not exist in Next 16
+## R-17 · CLOSED · the per-phase lint gate was a FALSE GREEN — `next lint` does not exist in Next 16
 
 Surfaced at the Phase 1 gate. Sol independently hit the second half of this and filed
 `.sol/requests/phase1-sol-lint.md`; the first half is worse and neither of us was
@@ -350,7 +350,7 @@ helper in non-React server code) as a React hook — and the one remaining findi
 `npx next lint | grep -c…`; neither file is Fable-owned, so the wording fix — assert on
 `npx eslint .`'s exit code, never a piped grep count — still needs its owner.
 
-## R-18 · OPEN · `PRESCRIBER` in `app/page.tsx` duplicates `DEMO_ACTORS` in the prescribe route
+## R-18 · CLOSED · `PRESCRIBER` in `app/page.tsx` duplicated `DEMO_ACTORS` in the prescribe route
 
 The demo actor (`dr_chen` / "Dr. Chen" / "Attending, Oncology") is declared in
 two Fable-owned files: the route's `DEMO_ACTORS` shim and the page's
@@ -410,7 +410,7 @@ longer payer clause, a different renderer — puts it back over, and it will CLI
 not scroll. If that happens on the demo machine, take it out of `CoverageLine`'s
 clause text (11px, 3 lines) before touching the blockquote.
 
-## R-20 · OPEN · Bright Data key authenticates but the account has NO ZONES
+## R-20 · CLOSED · Bright Data key authenticated but the account had NO ZONES
 
 Item 2 of `phase4-sponsors` (FDA pharmacogenetic associations table) is blocked at
 stage 1. Measured:
@@ -550,3 +550,46 @@ only, same as CPIC and FDA), and it must never reach the alert path or the
 WhyDrawer. `join.LIMITATION` stays verbatim and stays on screen — it says the
 name-only join is a lower bound that undercounts, and softening it would be the
 overclaim the whole project exists to avoid.
+
+---
+
+## Closures — evidence, recorded at freeze
+
+**R-17 CLOSED.** The gate line was `npx next lint | grep -cE ...`, which printed `0`
+whether the lint was clean or the command did not exist — and `next lint` was removed
+in Next 16. Both `BUILD_ORDER.md` and `CLAUDE.md` now assert on exit codes, and
+`eslint.config.mjs` no longer wraps an already-flat config in `FlatCompat`. Measured
+now: `npx eslint .` exits **0** with no output, having actually linted the tree. The
+instrument runs and can fail — it reported a real `prefer-const` in `tamper.ts`
+earlier, which is how we know it is not stuck at zero.
+
+**R-18 CLOSED.** The demo actor was declared twice — `PRESCRIBER` in `app/page.tsx`
+and `DEMO_ACTORS` in `app/api/prescribe/route.ts`. They agreed, but nothing made
+them, and they feed **different records in the same chain**: the order record's actor
+is resolved server-side, the override record's is posted by the client. Divergence
+would put one person under two identities in one audit trail — the attribution claim
+§11.50 exists for. Now one declaration in `lib/actors.ts`, imported by both.
+
+Proven by mutation, not by reading the diff:
+
+```
+sed 's/Dr. Chen/Dr. MUTATED/' lib/actors.ts   # grep -c MUTATED -> 1
+POST /api/prescribe -> ledger actor.name = "Dr. MUTATED"
+restored                -> ledger actor.name = "Dr. Chen"
+```
+
+The server-side record moved when the single source moved, so the two call sites are
+genuinely one declaration and not two that happen to match.
+
+**R-20 CLOSED.** The account had no zones, so `/request` 400'd on every name tried.
+Zone `tally_fda` now exists: `POST https://api.brightdata.com/request` returns 200 /
+75,336 bytes, `scripts/scrape-fda.ts` re-ran without `--direct`, and
+`data/fda-pgx.json` carries `via: "brightdata"` with 124 associations and both demo
+pairs present. Verified end to end through the live route:
+`alert.fdaLabeled.via = "brightdata"`.
+
+**Still open, deliberately:** R-1 and R-2 belong to `_template.md`'s source of
+record, which is another repo. R-3 and R-4 are stated limitations, not defects.
+R-15 is stretch. R-21 is a documented design choice — the FDA badge shows every row
+the table carries for a pair, because `affected_subgroups` is regulatory prose and
+filtering it would be an editorial judgement on regulatory text.

@@ -17,12 +17,13 @@ import { OrderForm } from "@/components/prescribe/OrderForm";
 import { PatientCard } from "@/components/prescribe/PatientCard";
 import { WhyDrawer } from "@/components/prescribe/WhyDrawer";
 import patientFile from "@/data/patients.json";
-import type { Actor, LedgerRecord, Patient, PrescribeResponse } from "@/lib/contracts";
+import type { LedgerRecord, Patient, PrescribeResponse } from "@/lib/contracts";
+import { PRESCRIBER } from "@/lib/actors";
 
 const PATIENTS: Patient[] = patientFile.patients;
 
-/** DEMO SHIM — mirrors DEMO_ACTORS in app/api/prescribe/route.ts. */
-const PRESCRIBER: Actor = { id: "dr_chen", name: "Dr. Chen", role: "Attending, Oncology" };
+// PRESCRIBER is imported from lib/actors — ONE declaration (R-18). The
+// order record and the override record now provably name the same person.
 
 export default function Home() {
   const [patientId, setPatientId] = useState(PATIENTS[0].patientId);

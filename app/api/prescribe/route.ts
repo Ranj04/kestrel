@@ -18,16 +18,9 @@ import { getPatient } from "../../../lib/pgx";
 import { evaluate } from "../../../lib/pgx/evaluate";
 import { coverageFor } from "../../../lib/pgx/policy";
 import { resolveDrug } from "../../../lib/pgx/resolve";
+import { actorFor } from "../../../lib/actors";
 
-/** DEMO SHIM: display identities for the demo prescriber ids. An unknown id
- *  passes through with itself as the name — never invent a person. */
-const DEMO_ACTORS: Record<string, Actor> = {
-  dr_chen: { id: "dr_chen", name: "Dr. Chen", role: "Attending, Oncology" },
-};
-
-function actorFor(orderedBy: string): Actor {
-  return DEMO_ACTORS[orderedBy] ?? { id: orderedBy, name: orderedBy, role: "Prescriber" };
-}
+// actorFor is imported from lib/actors — ONE declaration (R-18).
 
 // Dose/route are ECHOES of the prescriber's own text (regex extraction), not
 // clinical values — clinical strings only ever come from data/cpic/index.json.
