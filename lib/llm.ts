@@ -118,14 +118,22 @@ async function completeBedrock(sdk: BedrockSdk, prompt: string): Promise<ModelPr
 
 // ---------------------------------------------------------------- openai
 
-async function completeOpenAI(key: string, prompt: string): Promise<ModelProvenance | null> {
+/** One attempt against one credential. Returns null on ANY failure, as ever. */
+async function tryOpenAI(
+  key: string,
+  credential: "primary" | "fallback",
+  prompt: string,
+): Promise<ModelProvenance | null> {
   // Default chosen from what the venue's project key can actually reach:
   // its model list is {gpt-4-turbo, gpt-4.1-nano, gpt-5.3-codex, gpt-5.4}
   // (gpt-4o-mini 403s: "model_not_found"). gpt-4.1-nano is the cheapest of
   // the set and accepts max_tokens + temperature:0 as-is; the gpt-5.x
   // reasoning models reject both, so don't default to them.
   const model = env("ATTEST_OPENAI_MODEL") ?? "gpt-4.1-nano";
-  const params = { provider: "openai", ...BASE_PARAMS };
+  // `credential` rides in params so the ledger records WHICH key served the
+  // call. ALCOA "Original" is about the result being attributable; a
+  // silent failover that nothing records is an unattributable one.
+  const params = { provider: "openai", credential, ...BASE_PARAMS };
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -152,6 +160,25 @@ async function completeOpenAI(key: string, prompt: string): Promise<ModelProvena
   } catch {
     return null;
   }
+}
+
+/**
+ * Primary key, then fallback. Measured 2026-08-13: the original service-account
+ * key began returning 429 on every model it had previously served, so the
+ * fallback is not decoration -- it is the difference between the LLM path
+ * working and silently degrading to null.
+ *
+ * A fallback that fires unnoticed is its own defect, so the credential that
+ * actually served the call is recorded in ModelProvenance.params. Both keys
+ * failing is still a fully supported outcome: resolveDrug falls back to exact
+ * and substring matching, which carries the entire demo on its own.
+ */
+async function completeOpenAI(key: string, prompt: string): Promise<ModelProvenance | null> {
+  const first = await tryOpenAI(key, "primary", prompt);
+  if (first) return first;
+  const fallback = env("OPENAI_API_KEY_FALLBACK");
+  if (!fallback || fallback === key) return null;
+  return tryOpenAI(fallback, "fallback", prompt);
 }
 
 // ---------------------------------------------------------------- anthropic
