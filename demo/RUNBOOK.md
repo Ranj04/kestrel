@@ -41,19 +41,33 @@ FDA block showing `retrieved … · via brightdata`.
 
 > This is the one that proves the lookup is real. Do not cut it.
 
-**5. Tamper a record.** Header goes vermilion — `CHAIN BROKEN AT RECORD n`.
-The broken row gets a 4px rule, drops to 0.6 opacity, and its tick becomes
-**MISMATCH**. Every record before it stays green.
-
-> Tamper answers *did someone change the record*. The next button answers
-> *is this decision still warranted*. Almost nothing answers the second.
-
-**6. Publish policy revision.** capecitabine authorization → **SUPERSEDED**, with
-the colliding scope named. codeine → **VALID**, *"evidence changed elsewhere; no
-scope collision."* **The chain stays green.**
+**5. Publish policy revision — BEFORE tampering.** capecitabine authorization →
+**SUPERSEDED**, with the colliding scope named. codeine → **VALID**, *"evidence
+changed elsewhere; no scope collision."* **The chain header stays GREEN.**
 
 > Signing an override isn't a permanent licence. It was granted against evidence,
-> and when the evidence moves the licence expires by itself.
+> and when the evidence moves the licence expires by itself. Nobody had to
+> remember to go back and check.
+
+**6. Tamper a record — LAST.** Header goes vermilion, `CHAIN BROKEN AT RECORD n`.
+The broken row gets a 4px rule, drops to 0.6 opacity, and its tick becomes
+**MISMATCH**. Every record before it stays green. The authorizations above are
+untouched: one still SUPERSEDED, one still VALID.
+
+> Tamper answers *did someone change the record*. The revision answered *is this
+> decision still warranted*. Two red states, two different questions — and the
+> chain was green through the first one.
+
+### Why this order
+
+Publish **before** tamper, not after. Two reasons:
+
+1. Beat 5's whole point is that **the chain stays green** while an authorization
+   dies. On an already-red chain you cannot show that — the audience sees red and
+   red, and the distinction the product is built on disappears.
+2. Both orders work (the publish button is no longer gated on chain integrity),
+   but green→revision→red is the honest narrative arc: normal operations first,
+   then the attack.
 
 ## If a judge pushes back
 

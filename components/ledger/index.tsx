@@ -152,8 +152,16 @@ export function LedgerPane() {
         ephemeral={ephemeral}
         tamperNotice={tamperNotice}
         busy={busy}
+        /* Deliberately NOT gated on verification.ok. A tampered chain and a
+           revised policy are independent facts: a payer revises policy whether
+           or not someone edited your audit log, and phase2b's whole point is
+           that tamper-red ("did someone change the record") and superseded
+           ("is this decision still warranted") must never collapse into one
+           state. Gating publish on an intact chain conflated exactly those two
+           and dead-ended the demo: once you tampered, the button greyed out
+           until a reset threw the signed override away. The supersede route
+           already appends correctly on a broken chain. */
         canSupersede={
-          verification?.ok === true &&
           revision === null &&
           authorizations.some((authorization) =>
             authorization.boundTo.scopes.includes("dosing.capecitabine"),
