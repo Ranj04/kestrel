@@ -92,7 +92,7 @@ Stated plainly, because the project's whole claim is provenance.
 |---|---|---|
 | CPIC guidelines — 107 drugs, 19 genes, 88 Level A pairs | **Real**, cached from `api.cpicpgx.org` | `data/cpic/` |
 | FDA Table of Pharmacogenetic Associations — 124 rows | **Real**, scraped via Bright Data | `data/fda-pgx.json` |
-| Aetna CPB 0715 DPYD coverage clauses | **Real**, scraped via Bright Data | `data/payer-policies-scraped.json` |
+| Aetna CPB 0715 DPYD coverage clauses | **Real**, scraped via Bright Data — **truncated capture**, both clauses cut mid-word and flagged `truncated: true` in-file | `data/payer-policies-scraped.json` |
 | Convoke pipeline capture — 239 Phase 3 oncology programs | **Real**, via Convoke's MCP server | `data/convoke-pipeline.json` |
 | Payer policy "Meridian Health Plan" — 2 policies, 6 clauses | **Synthetic**, labelled in-file | `data/policies.json` |
 | Patients — 4 | **Synthetic**, genotypes copied verbatim from CPIC's diplotype table | `data/patients.json` |

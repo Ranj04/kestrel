@@ -179,6 +179,13 @@ export interface Credibility {
 export interface GeneAssessment {
   gene: string;
   assessed: boolean;
+  /** ADDITIVE, phase 7.5 (G-5 / R-25): true when the matched lookup's CPIC
+   *  rows DISAGREE on severity or recommendation text — the case where the D6
+   *  guard deliberately raises no alert. A suppressed conflict is an UNKNOWN,
+   *  not a clearance: the renderer must treat assessed=true + conflict=true as
+   *  amber "no determination", never as the assessed pass. Computed by the
+   *  same disagree rule evaluate() runs — one declaration, never a copy. */
+  conflict: boolean;
   /** the patient has a GeneResult for this gene. false + assessed=false means
    *  "no result on file"; true + assessed=false means the lookup matched no
    *  CPIC row. The renderer words the two differently — both are amber. */
@@ -204,7 +211,11 @@ export interface PrescribeResponse {
   credibility: Credibility;
   resolution: {
     matched: boolean;
-    method: "exact" | "substring" | "llm" | "none";
+    /** ADDITIVE, phase 7.5 (G-23): "demo-alias" is a hit through resolve.ts's
+     *  two-entry BRAND_MAP demo shim. It used to report "exact", and the UI
+     *  rendered "matched exact" for a substitution an undisclosed demo
+     *  dictionary made. The resolution itself is unchanged — only named. */
+    method: "exact" | "demo-alias" | "substring" | "llm" | "none";
     candidates: string[];
   };
 }

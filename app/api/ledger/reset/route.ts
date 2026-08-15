@@ -1,6 +1,7 @@
-import { ephemeral, reset, resetSnapshotState } from "@/lib/ledger";
+import { demoControlsEnabled, ephemeral, reset, resetSnapshotState } from "@/lib/ledger";
 
 export async function POST(): Promise<Response> {
+  if (!demoControlsEnabled()) return new Response(null, { status: 404 });
   try {
     reset();
     resetSnapshotState();

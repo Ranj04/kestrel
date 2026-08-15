@@ -1,5 +1,5 @@
 {
-  "note": "SYNTHETIC. A real CDS Hooks v2.0.1 `order-sign` request as an EHR would POST it, with the DPYD Observation pre-attached. Used by tests/ and by the /api/cds-services endpoint's example. Patient ids match data/patients.json.",
+  "note": "SYNTHETIC. A real CDS Hooks v2.0.1 `order-sign` request as an EHR would POST it, with the DPYD Observation pre-attached. The /api/cds-services endpoint is PLANNED, NOT IMPLEMENTED - no such route exists in this repository and nothing serves or consumes this file at runtime (docs/INTEGRATION.md; REGISTER.md R-15; docs/PRODUCTION_GAP.md G-15). Patient ids match data/patients.json.",
   "hook": "order-sign",
   "hookInstance": "d1577c69-dfbe-44ad-ba6d-3e05e953b2ea",
   "fhirServer": "https://fhir.example.org/api/FHIR/R4",

@@ -1,5 +1,5 @@
 {
- "note": "SCRAPED, NOT SYNTHETIC. Real payer policy text retrieved via Bright Data (zone tally_fda) and cached at author time; nothing fetches at runtime. Verbatim cell text only - no summarisation, no paraphrase, no spelling corrections. This file is SEPARATE from data/policies.json on purpose: policies.json drives the live demo and is validated by npm run verify, and a scraped document must not be able to break a working clinical path. Absence of a clause here is not evidence a payer lacks one.",
+ "note": "SCRAPED, NOT SYNTHETIC. Real payer policy text retrieved via Bright Data (zone tally_fda) and cached at author time; nothing fetches at runtime. TRUNCATED CAPTURES, not verbatim quotations: both clause texts were cut by a fixed-length capture window - each ends mid-word and pulls in adjacent unrelated content (docs/PRODUCTION_GAP.md G-25). The captured characters themselves are untouched - no summarisation, no paraphrase, no spelling corrections, and the cuts are NOT edited to read better, because completing or trimming a capture would be authoring payer language. This file is SEPARATE from data/policies.json on purpose: policies.json drives the live demo and is validated by npm run verify, and a scraped document must not be able to break a working clinical path. It must not be promoted into the determination path until the excerpts are re-captured with source locators. Absence of a clause here is not evidence a payer lacks one.",
  "origin": "scraped",
  "payer": "Aetna",
  "policyId": "CPB-0715",
@@ -11,20 +11,23 @@
   {
    "clauseId": "AETNA-0715.dpyd-testing",
    "text": "DPYD gene variants testing for members prior to considering fluoropymidine therapy (i.e., fluorouracil or capecitabine); Epidermal growth factor recep",
+   "truncated": true,
    "criterion": {
     "type": "genotype_covered",
     "gene": "DPYD"
    },
-   "note": "Verbatim, including Aetna's own spelling 'fluoropymidine'. Not corrected."
+   "note": "TRUNCATED CAPTURE, not a complete quotation: the text ends mid-word ('recep') and bleeds into an adjacent unrelated list item (EGFR). The captured characters are untouched, including Aetna's own spelling 'fluoropymidine'. Not corrected, not completed."
   },
   {
    "clauseId": "AETNA-0715.cpt-81232",
    "text": "81232 DPYD (dihydropyrimidine dehydrogenase) (eg, 5-fluorouracil/5-FU and capecitabine drug metabolism), gene analysis, common variant(s) (eg, *2A, *4, *5, *6) Other CPT codes related to the",
+   "truncated": true,
    "criterion": {
     "type": "billing_code",
     "code": "81232",
     "gene": "DPYD"
-   }
+   },
+   "note": "TRUNCATED CAPTURE, not a complete quotation: the text ends mid-phrase ('related to the'). The captured characters are untouched. Not corrected, not completed."
   }
  ]
 }

@@ -2,6 +2,7 @@ export { canonicalJson, GENESIS_PREV_HASH, hashRecord, stableHash } from "./hash
 export { clausesFor, CLAUSE_LABELS, CLAUSES_BY_EVENT } from "./clauses";
 export {
   append,
+  demoControlsEnabled,
   ephemeral,
   readAll,
   reset,

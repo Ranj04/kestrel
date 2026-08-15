@@ -1,20 +1,14 @@
-import type { Actor } from "@/lib/contracts";
+import { actorFor } from "@/lib/actors";
 import { recordOverride } from "@/lib/ledger";
 
 interface OverrideRequest {
   alertId?: unknown;
   orderId?: unknown;
-  actor?: unknown;
+  actorId?: unknown;
   printedName?: unknown;
   signatureMeaning?: unknown;
   rationale?: unknown;
   suggestedRationale?: unknown;
-}
-
-function isActor(value: unknown): value is Actor {
-  if (!value || typeof value !== "object") return false;
-  const actor = value as Record<string, unknown>;
-  return typeof actor.id === "string" && typeof actor.name === "string" && typeof actor.role === "string";
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -28,7 +22,7 @@ export async function POST(request: Request): Promise<Response> {
   if (
     typeof body.alertId !== "string" ||
     typeof body.orderId !== "string" ||
-    !isActor(body.actor) ||
+    typeof body.actorId !== "string" ||
     typeof body.printedName !== "string" ||
     body.printedName.trim() === "" ||
     !["authorship", "review", "approval"].includes(String(body.signatureMeaning)) ||
@@ -36,7 +30,7 @@ export async function POST(request: Request): Promise<Response> {
     body.rationale.trim().length < 20
   ) {
     return Response.json(
-      { error: "alert, actor, printed name, signature meaning, and a 20-character rationale are required" },
+      { error: "alert, actorId, printed name, signature meaning, and a 20-character rationale are required" },
       { status: 400 },
     );
   }
@@ -45,7 +39,7 @@ export async function POST(request: Request): Promise<Response> {
     const record = recordOverride({
       alertId: body.alertId,
       orderId: body.orderId,
-      actor: body.actor,
+      actor: actorFor(body.actorId),
       printedName: body.printedName.trim(),
       signatureMeaning: body.signatureMeaning as "authorship" | "review" | "approval",
       rationale: body.rationale.trim(),

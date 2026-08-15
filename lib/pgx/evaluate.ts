@@ -45,6 +45,23 @@ export function severityOf(text: unknown, classification: string | null | undefi
 const RANK: Record<Severity, number> = { none: 0, caution: 1, critical: 2 };
 
 /**
+ * THE D6 disagree rule — the single declaration (the R-5 lesson applies here
+ * too: two copies of a closed rule can silently stop agreeing). Used by
+ * evaluate() to suppress a conflicting triple and by assessGenes() to carry
+ * that suppression as `conflict: true`, so the renderer can never paint a
+ * refused determination as an assessed pass (G-5 / R-25).
+ */
+function rowsDisagree(rows: CpicEntry[]): boolean {
+  const first = rows[0];
+  const severity = severityOf(first.recommendation, first.classification);
+  return rows.some(
+    (r) =>
+      r.recommendation !== first.recommendation ||
+      severityOf(r.recommendation, r.classification) !== severity,
+  );
+}
+
+/**
  * `index` is injectable ONLY so tests can prove the D6 conflict guard fires
  * against a synthetic two-row disagreement; production callers omit it.
  */
@@ -77,21 +94,14 @@ export function evaluate(
     // if they disagree, raise NO alert for this gene and log the conflict.
     const entry = rows[0];
     const severity = severityOf(entry.recommendation, entry.classification);
-    if (rows.length > 1) {
-      const disagree = rows.some(
-        (r) =>
-          r.recommendation !== entry.recommendation ||
-          severityOf(r.recommendation, r.classification) !== severity,
+    if (rows.length > 1 && rowsDisagree(rows)) {
+      console.warn(
+        `[pgx] CONFLICT (D6): ${rows.length} CPIC rows for (${drug}, ${result.gene}, ` +
+          `lookup "${result.lookup}") disagree on severity or recommendation text — ` +
+          `raising NO alert for this gene. Rendering one of two conflicting ` +
+          `recommendations is worse than rendering none.`,
       );
-      if (disagree) {
-        console.warn(
-          `[pgx] CONFLICT (D6): ${rows.length} CPIC rows for (${drug}, ${result.gene}, ` +
-            `lookup "${result.lookup}") disagree on severity or recommendation text — ` +
-            `raising NO alert for this gene. Rendering one of two conflicting ` +
-            `recommendations is worse than rendering none.`,
-        );
-        continue;
-      }
+      continue;
     }
 
     if (severity === "none") continue; // CPIC says standard therapy: no alert.
@@ -131,12 +141,17 @@ export function assessGenes(
   return Object.keys(byGene).map((gene) => {
     const result = patient.results.find((r) => r.gene === gene) ?? null;
     const want = result ? String(result.lookup).trim().toLowerCase() : null;
-    const matched =
-      want !== null &&
-      (byGene[gene] ?? []).some((e) => String(e.lookup).trim().toLowerCase() === want);
+    const rows =
+      want === null
+        ? []
+        : (byGene[gene] ?? []).filter((e) => String(e.lookup).trim().toLowerCase() === want);
     return {
       gene,
-      assessed: matched,
+      assessed: rows.length > 0,
+      // G-5 / R-25: when the matched rows disagree, evaluate() suppressed this
+      // gene (the D6 guard) — carry that fact so the screen renders an amber
+      // unknown, never the green assessed line, for a refused determination.
+      conflict: rows.length > 1 && rowsDisagree(rows),
       resultOnFile: result !== null,
       phenotype: result?.phenotype ?? null,
       diplotype: result?.diplotype ?? null,

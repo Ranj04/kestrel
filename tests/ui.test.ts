@@ -194,12 +194,17 @@ test("AlertCard: FDA badge renders for Okafor, INLINE on the CPIC badge row (no 
   assert.ok(response.alert?.fdaLabeled, "the alert must carry the FDA association");
   const html = renderAlertCard(response, p);
 
-  assert.ok(html.includes("FDA-labeled"), "badge renders");
+  // PHASE 7.5, disclosed: this pinned the literal "FDA-labeled". G-10 renamed
+  // the badge to the claim the evidence supports — inclusion in the FDA's
+  // association table, not labeling. The pin moved WITH the rename and is
+  // strictly stronger: it also asserts the old overclaim is GONE.
+  assert.ok(html.includes("FDA association table"), "badge renders, table-inclusion wording");
+  assert.ok(!html.includes("FDA-labeled"), "the labeling overclaim no longer renders");
   // Same row, not a new one: R-19 — the pane is height-constrained and the
   // badge must cost zero vertical height. If it moves out of the CPIC badge's
   // own <p>, this segment gains a </p> and the test goes red.
   const start = html.indexOf("CPIC LEVEL A");
-  const end = html.indexOf("FDA-labeled");
+  const end = html.indexOf("FDA association table");
   assert.ok(start >= 0 && end > start, "badge sits after the CPIC badge");
   assert.ok(
     !html.slice(start, end).includes("</p>"),
@@ -275,15 +280,17 @@ test("ABSENCE IS NOT EVIDENCE: a pair absent from the FDA table renders NO badge
   // has published one — so a green result here is the rule holding, not the
   // feature silently missing.
   const okaforCard = renderAlertCard(respond(patient("pt_okafor"), "capecitabine"), patient("pt_okafor"));
-  assert.ok(okaforCard.includes("FDA-labeled"), "positive control: the badge CAN render");
+  // PHASE 7.5, disclosed: literal moved with the G-10 badge rename.
+  assert.ok(okaforCard.includes("FDA association table"), "positive control: the badge CAN render");
 
   for (const [name, html] of [
     ["AlertCard", card],
     ["WhyDrawer", drawer],
   ] as const) {
     // No badge, and no negative claim in any wording — the whole point is that
-    // the table lists associations, not exclusions.
-    assert.ok(!html.includes("FDA-labeled"), `${name}: no badge`);
+    // the table lists associations, not exclusions. (PHASE 7.5: literal moved
+    // with the G-10 rename; the /FDA/i sweep below covers both spellings.)
+    assert.ok(!html.includes("FDA association table"), `${name}: no badge`);
     assert.ok(!/FDA/i.test(html), `${name}: the letters FDA do not appear at all`);
     assert.ok(!/not\s+labeled|no\s+FDA|unlabell?ed|not\s+listed/i.test(html), `${name}: no negative`);
   }

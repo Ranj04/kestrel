@@ -19,6 +19,7 @@ import { WhyDrawer } from "@/components/prescribe/WhyDrawer";
 import patientFile from "@/data/patients.json";
 import type { LedgerRecord, Patient, PrescribeResponse } from "@/lib/contracts";
 import { PRESCRIBER } from "@/lib/actors";
+import { screeningIncomplete } from "@/lib/credibility";
 
 const PATIENTS: Patient[] = patientFile.patients;
 
@@ -82,6 +83,11 @@ export default function Home() {
   // the pane, not the space left under the chart. top-16 (64px) clears the
   // header row + tab row (8 + 20 + 4 + 28 = 60px, measured at 1280x720).
   const critical = response?.alert?.severity === "critical";
+
+  // phase 7.5 (G-11 / R-26): when screening did not complete, the credibility
+  // card renders as not-applicable — never "No human control required." under
+  // an amber "screening incomplete" line.
+  const incomplete = response ? screeningIncomplete(response) : false;
 
   return (
     <main className="flex h-dvh flex-col">
@@ -149,16 +155,18 @@ export default function Home() {
                 // field it needs its own paper ground to stay legible.
                 <div className="mt-auto flex min-h-0 flex-col gap-1.5 pt-0.5">
                   {coverage && (
-                    <div className="border border-line bg-paper-raised px-4 py-0.5">
+                    // py-0.5 -> py-0 (phase 7.5): part of paying for the G-9
+                    // label inside the takeover's exact height budget (R-19).
+                    <div className="border border-line bg-paper-raised px-4 py-0">
                       <CoverageLine coverage={coverage} />
                     </div>
                   )}
-                  <CredibilityCard credibility={response.credibility} />
+                  <CredibilityCard credibility={response.credibility} screeningIncomplete={incomplete} />
                 </div>
               ) : (
                 <>
                   {coverage && <CoverageLine coverage={coverage} />}
-                  <CredibilityCard credibility={response.credibility} />
+                  <CredibilityCard credibility={response.credibility} screeningIncomplete={incomplete} />
                 </>
               )}
             </div>

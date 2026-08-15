@@ -26,7 +26,9 @@ import {
   type LedgerResponse,
 } from "../components/ledger/index.tsx";
 import { GET as ledgerGet } from "../app/api/ledger/route.ts";
+import { POST as acceptPost } from "../app/api/ledger/accept/route.ts";
 import { POST as exportPost } from "../app/api/ledger/export/route.ts";
+import { POST as overridePost } from "../app/api/ledger/override/route.ts";
 import { POST as resetPost } from "../app/api/ledger/reset/route.ts";
 import { POST as tamperPost } from "../app/api/ledger/tamper/route.ts";
 import { POST as verifyPost } from "../app/api/ledger/verify/route.ts";
@@ -171,22 +173,146 @@ test("a torn final JSONL line does not make readAll throw", () => {
 });
 
 test("ledger API routes invoke fresh verification, tamper, and reset", async () => {
+  const previousDemoMode = process.env.DEMO_MODE;
+  process.env.DEMO_MODE = "1";
   appendRecords(4);
-  const before = await (await ledgerGet()).json();
-  assert.equal(before.records.length, 4);
-  assert.equal(before.verify.ok, true);
+  try {
+    const before = await (await ledgerGet()).json();
+    assert.equal(before.records.length, 4);
+    assert.equal(before.verify.ok, true);
 
-  const changed = await (await tamperPost()).json();
-  assert.equal(changed.seq, 3);
-  const after = await (await verifyPost()).json();
-  assert.equal(after.ok, false);
-  assert.deepEqual(after.brokenSeqs, [3]);
+    const changed = await (await tamperPost()).json();
+    assert.equal(changed.seq, 3);
+    const after = await (await verifyPost()).json();
+    assert.equal(after.ok, false);
+    assert.deepEqual(after.brokenSeqs, [3]);
 
-  const resetResult = await (await resetPost()).json();
-  assert.equal(resetResult.ok, true);
-  const empty = await (await ledgerGet()).json();
-  assert.equal(empty.records.length, 0);
-  assert.equal(empty.verify.ok, true);
+    const resetResult = await (await resetPost()).json();
+    assert.equal(resetResult.ok, true);
+    const empty = await (await ledgerGet()).json();
+    assert.equal(empty.records.length, 0);
+    assert.equal(empty.verify.ok, true);
+  } finally {
+    if (previousDemoMode === undefined) delete process.env.DEMO_MODE;
+    else process.env.DEMO_MODE = previousDemoMode;
+  }
+});
+
+test("demo mutation routes default to 404 in production and stay enabled locally", async () => {
+  const previousDemoMode = process.env.DEMO_MODE;
+  const previousNodeEnv = process.env.NODE_ENV;
+  try {
+    delete process.env.DEMO_MODE;
+    Reflect.set(process.env, "NODE_ENV", "production");
+    appendRecords(2);
+    const before = readAll();
+
+    assert.equal((await tamperPost()).status, 404);
+    assert.equal((await resetPost()).status, 404);
+    assert.deepEqual(readAll(), before, "disabled demo routes must not mutate the chain");
+    assert.equal((await (await ledgerGet()).json()).demoControls, false);
+
+    Reflect.set(process.env, "NODE_ENV", "development");
+    assert.equal((await tamperPost()).status, 200);
+    assert.equal((await resetPost()).status, 200);
+    assert.equal((await (await ledgerGet()).json()).demoControls, true);
+
+    Reflect.set(process.env, "NODE_ENV", "production");
+    process.env.DEMO_MODE = "1";
+    appendRecords(1);
+    assert.equal((await resetPost()).status, 200);
+    assert.equal((await (await ledgerGet()).json()).demoControls, true);
+  } finally {
+    if (previousDemoMode === undefined) delete process.env.DEMO_MODE;
+    else process.env.DEMO_MODE = previousDemoMode;
+    if (previousNodeEnv === undefined) Reflect.deleteProperty(process.env, "NODE_ENV");
+    else Reflect.set(process.env, "NODE_ENV", previousNodeEnv);
+  }
+});
+
+test("ledger write routes accept only actorId and resolve authoritative actor fields", async () => {
+  const modalSource = readFileSync(
+    join(process.cwd(), "components", "ledger", "SignatureModal.tsx"),
+    "utf8",
+  );
+  assert.match(modalSource, /actorId: actor\.id/g);
+  assert.doesNotMatch(modalSource, /orderId: alert\.orderId, actor[ },]/);
+
+  append(
+    "alert.raised",
+    { alertId: "alert-contract", orderId: "order-contract", snapshot },
+    actor,
+    clausesFor("alert.raised"),
+  );
+
+  const overrideResponse = await overridePost(new Request("http://localhost/api/ledger/override", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      alertId: "alert-contract",
+      orderId: "order-contract",
+      actorId: "dr_chen",
+      printedName: "Dr. Chen",
+      signatureMeaning: "approval",
+      rationale: "Patient-specific rationale with enough detail.",
+      actor: { id: "forged", name: "Forged Name", role: "Forged Role" },
+    }),
+  }));
+  const overrideBody = await overrideResponse.json();
+  assert.equal(overrideResponse.status, 200);
+  assert.deepEqual(overrideBody.record.actor, {
+    id: "dr_chen",
+    name: "Dr. Chen",
+    role: "Attending, Oncology",
+  });
+
+  const acceptResponse = await acceptPost(new Request("http://localhost/api/ledger/accept", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      alertId: "alert-contract",
+      orderId: "order-contract",
+      actorId: "dr_chen",
+      actor: { id: "forged", name: "Forged Name", role: "Forged Role" },
+    }),
+  }));
+  const acceptBody = await acceptResponse.json();
+  assert.equal(acceptResponse.status, 200);
+  assert.deepEqual(acceptBody.record.actor, {
+    id: "dr_chen",
+    name: "Dr. Chen",
+    role: "Attending, Oncology",
+  });
+
+  for (const post of [overridePost, acceptPost]) {
+    const response = await post(new Request("http://localhost/api/ledger/write", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        alertId: "alert-contract",
+        orderId: "order-contract",
+        actor: { id: "dr_chen", name: "Forged Name", role: "Forged Role" },
+        printedName: "Forged Name",
+        signatureMeaning: "approval",
+        rationale: "Patient-specific rationale with enough detail.",
+      }),
+    }));
+    assert.equal(response.status, 400, "the legacy whole-actor contract must be rejected");
+  }
+});
+
+test("export.generated uses system attribution instead of the preceding actor", async () => {
+  appendRecords(1);
+  const response = await exportPost();
+  assert.equal(response.status, 200);
+
+  const generated = readAll().at(-1);
+  assert.equal(generated?.type, "export.generated");
+  assert.deepEqual(generated?.actor, {
+    id: "kestrel_system",
+    name: "Kestrel",
+    role: "Automated export",
+  });
 });
 
 test("policy revision selectively supersedes capecitabine, preserves codeine, and keeps the chain intact", async () => {
@@ -293,6 +419,7 @@ function uiLedgerResponse(verify: VerificationDetails): LedgerResponse {
     revision: null,
     verify,
     ephemeral: false,
+    demoControls: false,
   };
 }
 
@@ -397,6 +524,7 @@ test("ChainStatus uses singular copy when only one record is untrustworthy", () 
       }),
       verificationError: null,
       ephemeral: false,
+      demoControls: true,
       tamperNotice: null,
       busy: null,
       canSupersede: false,
@@ -423,6 +551,7 @@ test("ChainStatus keeps plural range copy when multiple records are untrustworth
       }),
       verificationError: null,
       ephemeral: false,
+      demoControls: true,
       tamperNotice: null,
       busy: null,
       canSupersede: false,
@@ -435,6 +564,37 @@ test("ChainStatus keeps plural range copy when multiple records are untrustworth
   );
 
   assert.match(html, /RECORDS 2–4 NOT TRUSTWORTHY/);
+});
+
+test("ChainStatus hides only demo mutation controls when they are disabled", () => {
+  const paneSource = readFileSync(
+    join(process.cwd(), "components", "ledger", "index.tsx"),
+    "utf8",
+  );
+  assert.match(paneSource, /setDemoControls\(body\.demoControls\)/);
+  assert.match(paneSource, /demoControls=\{demoControls\}/);
+
+  const html = renderToStaticMarkup(
+    createElement(ChainStatus, {
+      verification: uiVerification(),
+      verificationError: null,
+      ephemeral: false,
+      demoControls: false,
+      tamperNotice: null,
+      busy: null,
+      canSupersede: true,
+      onVerify: noop,
+      onTamper: noop,
+      onSupersede: noop,
+      onReset: noop,
+      onExport: noop,
+    }),
+  );
+
+  assert.doesNotMatch(html, /Tamper a record|Reset demo/);
+  assert.match(html, /Verify chain/);
+  assert.match(html, /Export package/);
+  assert.match(html, /Publish policy revision/);
 });
 
 test("supersede-then-tamper keeps the cascade, boundary row, and verified elision count", () => {

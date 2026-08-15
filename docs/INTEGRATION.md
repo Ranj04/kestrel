@@ -1,9 +1,18 @@
 # How this connects to a hospital
 
+> **STATUS: PLANNED — NOT IMPLEMENTED.** No CDS Hooks surface exists in this
+> repository: there is no `app/api/cds-services/` route, no discovery endpoint, no
+> hook handler, no feedback endpoint, and no FHIR or SMART code. Everything below is
+> the integration *design* against the published standards — it describes what would
+> be built, not what has been. The one artifact that exists is
+> `data/cds-hooks-example.json`, a synthetic request fixture nothing serves or
+> consumes. (Phase 7 audit: `docs/PRODUCTION_GAP.md` G-15; `REGISTER.md` R-15.)
+
 The short answer, and the one to give on stage: **you never touch their database.**
 No hospital gives a third party a connection string to patient data, and asking for one
 is the tell that you have not built healthcare software before. There are three
-standard surfaces, and this system sits on all three.
+standard surfaces, and this system is designed to sit on all three — **none of the
+three is implemented today.**
 
 Everything below is split into **verified** and **unverified**. Do not blur the line —
 a claim broader than its check is the failure mode this project's whole discipline

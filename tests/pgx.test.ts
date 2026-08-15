@@ -133,9 +133,14 @@ test("assessGenes: Lindqvist + capecitabine — DPYD genuinely assessed, display
   assert.equal(genes.length, 1);
   const dpyd = p.results.find((r) => r.gene === "DPYD");
   assert.ok(dpyd);
+  // PHASE 7.5, disclosed: this deepEqual pins GeneAssessment's exact shape, and
+  // the shape deliberately grew `conflict` (G-5/R-25 — a D6-suppressed conflict
+  // must be carried, not hidden). The pin moved WITH the contract change and is
+  // strictly stronger: it now also asserts Lindqvist's DPYD rows do NOT conflict.
   assert.deepEqual(genes[0], {
     gene: "DPYD",
     assessed: true,
+    conflict: false,
     resultOnFile: true,
     phenotype: dpyd.phenotype, // "Normal Metabolizer", from patients.json itself
     diplotype: dpyd.diplotype,
@@ -324,7 +329,12 @@ test("severityOf derives from CPIC text, never invents", () => {
 test("resolveDrug: brand name with dose noise reaches the CPIC key, no LLM", async () => {
   const r = await resolveDrug("Xeloda 1250 mg/m2 BID");
   assert.equal(r.drugName, "capecitabine");
-  assert.equal(r.method, "exact");
+  // PHASE 7.5, disclosed: this pinned method "exact". The resolution comes
+  // from the two-entry BRAND_MAP demo shim, and calling that "exact" was G-23's
+  // finding — the pin moved WITH the deliberate rename and is strictly
+  // stronger: "demo-alias" pins that the shim discloses itself, and the
+  // companion generic test below still pins that a true key match says "exact".
+  assert.equal(r.method, "demo-alias");
   assert.equal(r.provenance, undefined, "no LLM key means no model call at all");
 });
 

@@ -42,8 +42,10 @@ export default function PipelinePage() {
         </p>
 
         <section className="mt-10 border-t border-line pt-6">
+          {/* G-17: the artifact behind this list is an undated bundled
+              snapshot with no refresh pipeline — it cannot support "today". */}
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
-            Has a guideline today
+            Has a guideline in the bundled CPIC snapshot (capture date unavailable)
           </p>
           {convoke.covered.map((c) => (
             <p key={c.program} className="mt-3 text-lg">

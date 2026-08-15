@@ -23,6 +23,7 @@ export interface LedgerResponse {
   revision: ActiveRevision | null;
   verify: VerificationDetails;
   ephemeral: boolean;
+  demoControls: boolean;
   error?: string;
 }
 
@@ -121,6 +122,7 @@ export function LedgerPane() {
   const [verification, setVerification] = useState<VerificationDetails | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [ephemeral, setEphemeral] = useState(false);
+  const [demoControls, setDemoControls] = useState(false);
   const [tamperNotice, setTamperNotice] = useState<TamperNotice | null>(null);
   const [busy, setBusy] = useState<"verify" | "tamper" | "supersede" | "reset" | "export" | null>(null);
   const listRef = useRef<HTMLOListElement>(null);
@@ -137,6 +139,7 @@ export function LedgerPane() {
         setRevision(body.revision);
         setVerification(body.verify);
         setEphemeral(body.ephemeral);
+        setDemoControls(body.demoControls);
         setVerificationError(null);
       },
       reject: (message) => {
@@ -316,6 +319,7 @@ export function LedgerPane() {
         verification={verification}
         verificationError={verificationError}
         ephemeral={ephemeral}
+        demoControls={demoControls}
         tamperNotice={tamperNotice}
         busy={busy}
         /* Deliberately NOT gated on verification.ok. A tampered chain and a

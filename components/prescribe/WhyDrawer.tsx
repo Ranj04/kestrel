@@ -72,8 +72,10 @@ export function WhyDrawer({ alert, onClose }: { alert: Alert; onClose: () => voi
             place. */}
         {alert.fdaLabeled && (
           <div className="mt-3 border border-dashed border-line px-3 py-2">
+            {/* G-10: "FDA association table", not "FDA-labeled" — the cached
+                artifact proves table inclusion, not labeling. */}
             <p className="font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
-              FDA-labeled · scraped source
+              FDA association table · scraped source
             </p>
             <p className="mt-0.5 font-mono text-xs">
               {alert.fdaLabeled.gene} · {alert.fdaLabeled.drug}

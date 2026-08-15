@@ -1,6 +1,7 @@
-import { tamper } from "@/lib/ledger";
+import { demoControlsEnabled, tamper } from "@/lib/ledger";
 
 export async function POST(): Promise<Response> {
+  if (!demoControlsEnabled()) return new Response(null, { status: 404 });
   try {
     return Response.json(tamper());
   } catch (error) {

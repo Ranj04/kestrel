@@ -28,7 +28,10 @@ const STOPWORDS = new Set([
 
 export interface Resolution {
   drugName: string | null;
-  method: "exact" | "substring" | "llm" | "none";
+  /** "demo-alias" = a BRAND_MAP hit. Disclosed as such (G-23): rendering a
+   *  two-entry demo dictionary's substitution as "exact" claimed a brand
+   *  normalization capability that does not exist. */
+  method: "exact" | "demo-alias" | "substring" | "llm" | "none";
   candidates: string[];
   /** Present whenever the LLM was actually consulted, so the route can log
    *  `model.invoked` — even when the answer was discarded. */
@@ -42,11 +45,15 @@ export async function resolveDrug(raw: string): Promise<Resolution> {
   const cleaned = tokens.join(" ");
 
   // 1. Exact match — whole string, dose-stripped string, then each token,
-  //    each also tried through the demo brand map.
+  //    each also tried through the demo brand map. A hit THROUGH the map is
+  //    reported as "demo-alias", never "exact" (G-23): the substitution is
+  //    correct, but it came from a two-entry demo shim and must say so.
   for (const c of [lowered, cleaned, ...tokens]) {
     if (c === "") continue;
-    const mapped = BRAND_MAP[c] ?? c;
-    if (keys.includes(mapped)) return { drugName: mapped, method: "exact", candidates: [] };
+    if (keys.includes(c)) return { drugName: c, method: "exact", candidates: [] };
+    const mapped = BRAND_MAP[c];
+    if (mapped !== undefined && keys.includes(mapped))
+      return { drugName: mapped, method: "demo-alias", candidates: [] };
   }
 
   // 2. Substring — take it only if EXACTLY one index key hits; two candidates

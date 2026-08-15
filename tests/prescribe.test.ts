@@ -52,7 +52,9 @@ test("money shot: pt_okafor + Xeloda -> critical, signature, PRESCRIBE WRITES TH
   assert.ok(body.alert.citations.length > 0);
   assert.equal(body.credibility.requiredControl, "human-signature");
   assert.equal(body.resolution.matched, true);
-  assert.equal(body.resolution.method, "exact");
+  // PHASE 7.5, disclosed: was "exact" — Xeloda resolves through the BRAND_MAP
+  // demo shim and now says so end-to-end through the route (G-23).
+  assert.equal(body.resolution.method, "demo-alias");
   assert.equal(body.order.dose, "1250 mg/m2");
   assert.ok(body.coverage);
   assert.equal(body.coverage.determination, "not-covered");

@@ -242,6 +242,13 @@ standard; the binding constraint is that **most PGx results are still unstructur
 request whose DPYD Observation uses verified LOINC `79719-1` / `LA9657-3` and whose
 patient id and lookup string already agree with `data/patients.json`.
 
+**Update (phase 7.5, G-15): `STRETCH ONLY` understated this.** `docs/INTEGRATION.md`
+said the system "sits on all three" surfaces and the fixture's note said it was "used
+by the /api/cds-services endpoint" — an endpoint that does not exist. Both now carry
+**PLANNED — NOT IMPLEMENTED** explicitly, and the fixture note states nothing serves
+or consumes it. For production this is a blocker, not a stretch: see
+`docs/PRODUCTION_GAP.md#g-15` (phase 11 builds it).
+
 **Not built:** `.sol/prompts/phase3-fable-cdshooks.md` specifies the live endpoints and
 is marked **stretch only — do not start before the fallback video is recorded.** 40
 minute cap. This converts one pitch sentence from assertion to artifact; it is strictly
@@ -613,7 +620,7 @@ is a behaviour change in a file the phase touches only for paint.
 other piece of response state there), or key `<OrderForm>` on `patientId`. One
 line either way; needs a test that switching patients empties the field.
 
-## R-25 · OPEN, DELIBERATE · a D6-conflict-suppressed gene renders as the "assessed" line
+## R-25 · CLOSED (phase 7.5) · a D6-conflict-suppressed gene renders as the "assessed" line
 
 Surfaced while building `assessGenes()` (phase6 fix round). When the D6 guard finds
 conflicting CPIC rows for a matched lookup, `evaluate()` deliberately raises no alert
@@ -634,7 +641,20 @@ populated from the same disagree logic the D6 guard runs, and render it as an am
 "conflicting CPIC rows — no determination" line. The sweep test in `pgx.test.ts`
 already enumerates every real conflicting triple to pin it with.
 
-## R-26 · OPEN, DELIBERATE · credibility says "No human control required." under an incomplete screening
+**Update — CLOSED (Fable, phase 7.5, exactly the fix above).** The phase 7 audit
+(G-5) judged this entry's `OPEN, DELIBERATE` an understatement — under the audit's
+rubric what the screen implies is the severity, and a suppressed conflict implied a
+green clearance. `GeneAssessment.conflict` now exists (additive), computed by the
+SAME `rowsDisagree()` declaration the D6 guard runs (one declaration, per R-5), and
+`AlertCard` renders `assessed && conflict` as amber *"matched conflicting CPIC rows —
+no determination made … screening incomplete"*, never the green line. Pinned in
+`tests/phase75.test.ts`: the synthetic conflict fixture, an every-real-triple sweep
+(>100 triples asserting `conflict: true` each), and a render test proving the amber
+path and the absence of the assessed pass. Each was run red against the pre-7.5 tree
+first, and reverting either the computation or the render condition reddens its
+named test (report: `.sol/reviews/phase75-fable-report.md`).
+
+## R-26 · CLOSED AT THE CLAIM LEVEL (phase 7.5) · credibility says "No human control required." under an incomplete screening
 
 Observed in the browser while verifying the fix: pt_reyes + capecitabine now renders
 the amber "DPYD not assessed … screening incomplete" line, and directly below it the
@@ -652,3 +672,126 @@ never leans on that line for an unscreened patient.
 
 **Fix:** pass gene-coverage facts into `assess()` and add a context sentence to the
 rationale for the not-assessed case (still procedural, still no clinical language).
+
+**Update — the false claim is CLOSED (Fable, phase 7.5, G-11).** The audit judged
+`OPEN, DELIBERATE` an understatement. `lib/credibility.ts` now exports
+`screeningIncomplete()` — true when the drug matched no guideline, any relevant gene
+was not assessed, or a matched gene's rows conflicted (R-25) — and `CredibilityCard`
+renders **"Not applicable — screening incomplete; see screening status above."** in
+place of any conclusion whenever it is true. "No human control required." can no
+longer render under an amber incomplete line; verified live for Reyes+capecitabine
+and Bhattacharya. The page's call sites are pinned at the source (4a-quater,
+`tests/phase75.test.ts`), because a direct-render test cannot see a deleted prop.
+**Still open, unchanged:** the deeper fix — `assess()` itself taking coverage facts
+and a credibility taxonomy that carries an incomplete context — remains phase 10/13.
+
+## R-27 · OPEN, MITIGATED · G-4 production mutation routes are disabled by default
+
+`reset` and `tamper` now return 404 unless `DEMO_MODE=1` or
+`NODE_ENV=development`, and `GET /api/ledger` drives matching UI visibility. The
+routes still exist and a deployed operator can deliberately enable them; phase 12
+must remove or authenticate them. See `docs/PRODUCTION_GAP.md#g-4`.
+
+## R-28 · OPEN, PARTIALLY MITIGATED · G-2 attribution still has no authenticated subject
+
+The override and acceptance contracts now accept `actorId` rather than an actor
+object and resolve name/role through `actorFor()`, so the wire no longer chooses
+those fields. A caller may still choose any id because there is no authenticated
+session; phase 9 must derive the id server-side. See `docs/PRODUCTION_GAP.md#g-2`.
+
+## R-29 · OPEN, MITIGATED · G-1 signature identity is a disclosed fixture
+
+The modal, override row and export signature block now state that the signature is
+unauthenticated and the signer is a fixture. The printed-name field remains editable:
+making only the browser field read-only would not secure the route, while phase 9
+must derive an immutable printed name from re-authenticated identity. See
+`docs/PRODUCTION_GAP.md#g-1`.
+
+## R-30 · OPEN · G-3 verification cannot prove chain completeness
+
+The UI and inspection package now limit the claim to internal consistency of the
+records present and state that completeness requires the anchored head. Verification
+arithmetic is intentionally unchanged: trailing deletion and an empty chain still
+verify clean until phase 8 adds an external anchor. See
+`docs/PRODUCTION_GAP.md#g-3`.
+
+## R-31 · CLOSED, INTERIM · G-13 export attribution no longer borrows the last actor
+
+Every `export.generated` record is now attributed to `kestrel_system`; phase 9 may
+replace that interim system attribution with the authenticated exporter. See
+`docs/PRODUCTION_GAP.md#g-13`.
+
+## R-32 · OPEN, MITIGATED · G-12 clause ids are citations, not compliance attestations
+
+The UI and export now frame clause labels as clauses addressed by the record type.
+Actual retention, secure audit-trail controls and durable storage remain phase 8
+work; the ids do not assert those controls exist. See
+`docs/PRODUCTION_GAP.md#g-12`.
+
+## R-33 · OPEN · G-7 ledger storage is not durable or shared
+
+The ephemeral badge now says plainly that this is a demo, per-instance, in-memory,
+non-durable ledger. No persistence subsystem was added; phase 8 must provide one
+shared transactional store for records and revision state. See
+`docs/PRODUCTION_GAP.md#g-7`.
+
+## R-34 · OPEN, PARTIALLY MITIGATED · G-19 durability demotions now emit an error log
+
+Each storage catch that falls back to process memory now emits `console.error`.
+Structured mutation/verification logs, alerting, tracing, error tracking and rate
+limits remain absent for phase 12. See `docs/PRODUCTION_GAP.md#g-19`.
+
+## R-35 · CLOSED · G-5 the single-alert semantics are now stated on screen
+
+`evaluate()` returns only the highest-severity alert and only a source comment said
+so. Both alert branches now carry *"Highest-severity finding only; not an exhaustive
+screen."* — procedural, about what the system did. The engine still returns one
+alert; a result collection is phase 10. The suppressed-conflict half of G-5 is
+R-25's closure. See `docs/PRODUCTION_GAP.md#g-5`.
+
+## R-36 · CLOSED, INTERIM · G-9 the coverage line no longer claims a determination
+
+`CoverageLine` now leads with *"DEMO — fictional payer; not a coverage
+determination"*; clause text stays verbatim. Paid for inside the critical takeover's
+exact height budget by spending R-19's named reserve (clause text 12px→11px, slip
+py-0.5→py-0) — measured at 1280×720: 0 overflow, ~6px headroom. Real patient-plan
+context and payer-policy ingestion still have no phase owner. See
+`docs/PRODUCTION_GAP.md#g-9`.
+
+## R-37 · CLOSED · G-10 the badge claims table inclusion, not labeling
+
+`FDA-labeled` → `FDA association table` in `AlertCard` and `WhyDrawer`. The evidence
+is the FDA's association-table row (source, retrieval time and route disclosed
+unchanged); "labeled" asserted approved-labeling language nothing captured. A
+verified labeling source remains phase 13. The `Alert.fdaLabeled` field NAME is
+unchanged — renaming a frozen-contract field needs a `.sol/requests` round; the
+on-screen claim was the defect. See `docs/PRODUCTION_GAP.md#g-10`.
+
+## R-38 · CLOSED, INTERIM · G-17 the pipeline page no longer says "today"
+
+Heading is now *"Has a guideline in the bundled CPIC snapshot (capture date
+unavailable)"*. The snapshot's content is verbatim and untouched; a dated, refreshed,
+manifest-carrying pipeline is phase 10. See `docs/PRODUCTION_GAP.md#g-17`.
+
+## R-39 · CLOSED, INTERIM · G-23 the demo alias map now names itself
+
+A `BRAND_MAP` hit reports `method: "demo-alias"` (contract union widened, additive)
+and renders *"matched demo alias"*; a true index-key match still reads `exact` and
+the pgx/prescribe pins moved with the rename, disclosed in the phase report. A real
+terminology service is phase 10. See `docs/PRODUCTION_GAP.md#g-23`.
+
+## R-40 · CLOSED, INTERIM · G-25 the Aetna captures are labelled truncated, not "Verbatim"
+
+Both scraped clauses now carry `truncated: true` and notes stating the mid-word cuts
+and adjacent-content bleed; the captured characters themselves are untouched — the
+honest fix is the label, never editing a quote. `tests/phase75.test.ts` pins both
+the labels AND the unedited cut text. Re-capture with source locators before any
+promotion toward the determination path is phase 10.
+
+**Residual CLOSED by Claude Code at phase-7.5 close.** Fable named it and correctly
+could not touch it — `README.md` sits outside both ownership rows. The provenance
+table sits under the line *"Stated plainly, because the project's whole claim is
+provenance"*, so a row reading "**Real**, scraped" for a mid-word-truncated capture
+was the same defect class this phase exists to remove, in the one file a reader
+reaches first. The row now carries the truncation and points at the in-file flag.
+No quote text was edited. See `docs/PRODUCTION_GAP.md#g-25`.

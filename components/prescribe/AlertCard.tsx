@@ -69,18 +69,24 @@ export function AlertCard({
     // here). Genes the patient carries that are irrelevant to the drug are
     // not in this list and are deliberately not cited on this order.
     const genes = response.genesAssessed ?? [];
-    const notAssessed = genes.filter((g) => !g.assessed);
+    // phase 7.5 (G-5 / R-25): a gene whose matched CPIC rows CONFLICTED was
+    // deliberately suppressed by the D6 guard — a refused determination. It
+    // used to fall through to the green assessed line; it is an unknown and
+    // renders amber with the not-assessed states.
+    const problems = genes.filter((g) => !g.assessed || g.conflict);
 
-    // Any relevant gene without a matched result is an UNKNOWN, not a
-    // clearance — same honest-absence treatment as the two lines above, and
+    // Any relevant gene without a matched, agreeing result is an UNKNOWN, not
+    // a clearance — same honest-absence treatment as the two lines above, and
     // visually nothing like the green state (mono amber vs serif seal).
     // A response with no gene facts at all falls in here too: a clearance is
     // only ever rendered off positive evidence of assessment.
-    if (genes.length === 0 || notAssessed.length > 0) {
-      const missing = notAssessed.map((g) =>
-        g.resultOnFile
-          ? `${g.gene} result on file matched no CPIC row`
-          : `${g.gene} not assessed — no result on file`,
+    if (genes.length === 0 || problems.length > 0) {
+      const missing = problems.map((g) =>
+        g.conflict
+          ? `${g.gene} matched conflicting CPIC rows — no determination made`
+          : g.resultOnFile
+            ? `${g.gene} result on file matched no CPIC row`
+            : `${g.gene} not assessed — no result on file`,
       );
       return (
         <p className="py-1 font-mono text-sm text-amber">
@@ -147,9 +153,20 @@ export function AlertCard({
               title="FDA Table of Pharmacogenetic Associations — open the verbatim entry"
               className="font-semibold text-ink underline decoration-line decoration-dashed underline-offset-4 hover:decoration-ink"
             >
-              FDA-labeled ⓘ
+              {/* G-10: the evidence supports inclusion in the FDA's published
+                  association TABLE — "FDA-labeled" asserted labeling, a
+                  stronger regulatory claim than the cached artifact makes. */}
+              FDA association table ⓘ
             </button>
           )}
+        </p>
+
+        {/* G-5: evaluate() returns the single highest-severity alert; a second
+            actionable finding on the same order is not shown. Procedural — it
+            states what the system did, never clinical advice. Tight leading:
+            the takeover's height budget is exact (R-19). */}
+        <p className="mt-1 font-mono text-[11px] leading-tight text-ink-soft">
+          Highest-severity finding only; not an exhaustive screen.
         </p>
 
         {alert.implication && (
@@ -222,9 +239,16 @@ export function AlertCard({
             title="FDA Table of Pharmacogenetic Associations — open the verbatim entry"
             className="font-semibold text-ink underline decoration-line decoration-dashed underline-offset-4 hover:decoration-ink"
           >
-            FDA-labeled ⓘ
+            {/* G-10: association-table inclusion, not labeling — see the
+                critical branch's badge note. */}
+            FDA association table ⓘ
           </button>
         )}
+      </p>
+
+      {/* G-5: same single-finding disclosure as the critical branch. */}
+      <p className="mt-1 font-mono text-[11px] leading-tight text-ink-soft">
+        Highest-severity finding only; not an exhaustive screen.
       </p>
 
       {alert.implication && (

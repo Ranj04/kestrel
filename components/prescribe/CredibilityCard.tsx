@@ -33,7 +33,36 @@ const CONTROL_LABEL: Record<Credibility["requiredControl"], string> = {
   "human-signature": "Signed human decision required.",
 };
 
-export function CredibilityCard({ credibility }: { credibility: Credibility }) {
+export function CredibilityCard({
+  credibility,
+  screeningIncomplete = false,
+}: {
+  credibility: Credibility;
+  /** phase 7.5 (G-11 / R-26): when the screen above says screening did not
+   *  complete, this card must not render a confident conclusion. assess(null)
+   *  is procedurally correct input for every null alert — including "the
+   *  relevant gene was never assessed" — and "No human control required."
+   *  directly under an amber "screening incomplete" line reads as permission
+   *  to proceed unscreened. The page computes this via
+   *  lib/credibility.screeningIncomplete(). */
+  screeningIncomplete?: boolean;
+}) {
+  if (screeningIncomplete) {
+    return (
+      <div className="border-t border-line pt-1">
+        <p className="font-mono text-xs uppercase leading-tight tracking-[0.1em] text-ink-soft">
+          FDA credibility assessment
+        </p>
+        {/* Procedural, matching the amber status line above it — never a
+            conclusion about the order. */}
+        <p className="mt-0.5 font-mono text-xs text-amber">
+          Not applicable — screening incomplete; see screening status above. No
+          determination was made for this order.
+        </p>
+      </div>
+    );
+  }
+
   const signature = credibility.requiredControl === "human-signature";
   return (
     // phase6 fix round: was a bordered bg-paper-raised box — visually identical

@@ -11,6 +11,9 @@ import type { PrescribeResponse } from "@/lib/contracts";
 
 const METHOD_LABEL: Record<string, string> = {
   exact: "matched exact",
+  // G-23: a BRAND_MAP substitution used to render "matched exact" — an
+  // undisclosed two-entry demo dictionary is not an exact match and says so.
+  "demo-alias": "matched demo alias",
   substring: "matched substring",
   llm: "via model",
 };

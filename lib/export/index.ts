@@ -46,6 +46,7 @@ function signatureBlock(record: LedgerRecord): string {
   const payload = payloadObject(record);
   return `<section class="signature">
     <h3>§11.50 signature manifestation</h3>
+    <p><strong>DEMO — unauthenticated signature; the signer is a fixture</strong></p>
     <dl>
       <dt>Printed name</dt><dd>${escapeHtml(payload.printedName)}</dd>
       <dt>Date/time signed</dt><dd>${escapeHtml(payload.signedAt)}</dd>
@@ -58,6 +59,7 @@ function recordHtml(record: LedgerRecord, broken: boolean): string {
   return `<article class="record ${broken ? "broken" : "intact"}">
     <header><strong>#${record.seq} · ${escapeHtml(record.type)}</strong><time>${escapeHtml(record.occurredAt)}</time></header>
     <p><strong>Actor:</strong> ${escapeHtml(record.actor.name)} (${escapeHtml(record.actor.id)}) · ${escapeHtml(record.actor.role)}</p>
+    <p><strong>Clauses addressed by this record type:</strong></p>
     <ul class="clauses">${clauseList(record)}</ul>
     ${signatureBlock(record)}
     <h3>Payload</h3>
@@ -132,7 +134,7 @@ function authorizationHtml(input: InspectionPackageInput): string {
 
 export function inspectionReportHtml(input: InspectionPackageInput): string {
   const status = input.verification.ok
-    ? "CHAIN INTACT"
+    ? "RECORDS PRESENT ARE INTERNALLY CONSISTENT; COMPLETENESS REQUIRES THE ANCHORED HEAD"
     : `CHAIN BROKEN AT RECORD ${input.verification.firstBrokenSeq}`;
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -156,8 +158,8 @@ function readme(input: InspectionPackageInput): string {
 Generated: ${input.generatedAt}
 
 CONTENTS
-- ledger.jsonl: complete machine-readable electronic ledger
-- inspection-report.html: complete self-contained human-readable copy
+- ledger.jsonl: machine-readable records present at export
+- inspection-report.html: self-contained human-readable copy of records present at export
 - verification.json: chain verification result at export time
 - README.txt: this independent verification procedure
 
@@ -176,7 +178,11 @@ Each line in ledger.jsonl is one JSON record in chronological order.
 6. Compare the computed value with the record's stored hash. The first mismatch and
    every record after it are not trustworthy because the chain link has been broken.
 
-Verification at export: ${input.verification.ok ? "intact" : `broken at record ${input.verification.firstBrokenSeq}`}
+LIMITATION
+Records present are internally consistent when every comparison passes; completeness
+requires the anchored head. This package alone cannot detect deleted trailing records.
+
+Verification at export: ${input.verification.ok ? "records present are internally consistent; completeness requires the anchored head" : `broken at record ${input.verification.firstBrokenSeq}`}
 Records checked: ${input.verification.total}
 Checked at: ${input.verification.checkedAt}
 `;

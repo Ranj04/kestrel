@@ -6,15 +6,10 @@ export const dynamic = "force-dynamic";
 export async function POST(): Promise<Response> {
   try {
     const generatedAt = new Date().toISOString();
-    const latestActor = readAll().at(-1)?.actor ?? {
-      id: "kestrel_system",
-      name: "Kestrel",
-      role: "Automated export",
-    };
     append(
       "export.generated",
       { generatedAt, forms: ["human-readable HTML", "electronic JSONL"] },
-      latestActor,
+      { id: "kestrel_system", name: "Kestrel", role: "Automated export" },
       clausesFor("export.generated"),
     );
     const records = readAll();

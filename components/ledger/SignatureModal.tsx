@@ -75,7 +75,7 @@ function SignatureModalForm({
     await record("override", {
       alertId: alert.alertId,
       orderId: alert.orderId,
-      actor,
+      actorId: actor.id,
       printedName,
       signatureMeaning: meaning,
       rationale,
@@ -90,6 +90,9 @@ function SignatureModalForm({
           <div>
             <p className="font-mono text-xs tracking-[0.18em] text-ink-soft">21 CFR PART 11 SIGNATURE</p>
             <h2 id="signature-title" className="mt-1 text-xl font-semibold">Override and sign</h2>
+            <p className="mt-1 font-mono text-xs font-semibold text-accent-deep">
+              DEMO — unauthenticated signature; the signer is a fixture
+            </p>
           </div>
           <button type="button" onClick={onClose} className="font-mono text-xs text-ink-soft hover:text-ink">Close</button>
         </div>
@@ -128,7 +131,7 @@ function SignatureModalForm({
           <button
             type="button"
             disabled={busy !== null}
-            onClick={() => void record("accept", { alertId: alert.alertId, orderId: alert.orderId, actor })}
+            onClick={() => void record("accept", { alertId: alert.alertId, orderId: alert.orderId, actorId: actor.id })}
             className="border border-seal px-3 py-2 font-mono text-xs text-seal hover:bg-seal/10 disabled:opacity-40"
           >
             {busy === "accept" ? "Recording…" : "Accept recommendation"}

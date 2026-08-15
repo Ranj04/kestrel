@@ -1,6 +1,7 @@
 import {
   activeRevisionStatus,
   authorizationStatus,
+  demoControlsEnabled,
   ephemeral,
   readAll,
   verifyDetailed,
@@ -17,6 +18,7 @@ export async function GET(): Promise<Response> {
       revision: activeRevisionStatus(),
       verify: verifyDetailed(),
       ephemeral,
+      demoControls: demoControlsEnabled(),
     });
   } catch (error) {
     return Response.json(

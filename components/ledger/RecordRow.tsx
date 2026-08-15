@@ -113,6 +113,7 @@ export function RecordRow({ record, verification }: RecordRowProps) {
           <div className="mt-1 flex min-w-0 items-baseline gap-2 text-paper/55">
             <span className="shrink-0">{record.actor.id} · {record.actor.role}</span>
             <span className="min-w-0 flex-1 truncate">
+              clauses addressed by this record type: {" "}
               {record.clauses.map((clause) => `${clause} - ${CLAUSE_LABELS[clause] ?? "recorded control"}`).join("  ·  ")}
             </span>
           </div>
@@ -129,6 +130,11 @@ export function RecordRow({ record, verification }: RecordRowProps) {
             </div>
           )}
           {signedMeaning && <div className="mt-1 text-paper/55">signed — {signedMeaning}</div>}
+          {record.type === "alert.overridden" && (
+            <div className="mt-1 font-semibold text-amber">
+              DEMO — unauthenticated signature; the signer is a fixture
+            </div>
+          )}
 
           <div className="mt-1 flex min-w-0 items-baseline gap-2 overflow-hidden text-paper/40">
             <span className="min-w-0 flex-1 truncate">

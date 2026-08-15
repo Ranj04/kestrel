@@ -20,6 +20,12 @@ export { clausesFor, CLAUSE_LABELS, CLAUSES_BY_EVENT } from "./clauses";
 
 export const LEDGER_PATH = join(process.cwd(), "data", "ledger.jsonl");
 
+export function demoControlsEnabled(): boolean {
+  const demoEnabled =
+    process.env.DEMO_MODE === "1" || process.env.NODE_ENV === "development";
+  return demoEnabled;
+}
+
 /**
  * Serverless init. On Vercel the ledger CANNOT live on disk, for two independent
  * reasons: data/ledger.jsonl is gitignored so it is absent from the build, and
@@ -41,7 +47,8 @@ export const LEDGER_PATH = join(process.cwd(), "data", "ledger.jsonl");
     // file is fine locally (first run creates it); an unwritable one is not.
     mkdirSync(dirname(LEDGER_PATH), { recursive: true });
     appendFileSync(LEDGER_PATH, "", "utf8");
-  } catch {
+  } catch (error) {
+    console.error("Ledger storage is unavailable; using non-durable process memory.", error);
     useEphemeral([]);
   }
 })();
@@ -137,6 +144,7 @@ export function append(
     appendFileSync(LEDGER_PATH, line, "utf8");
   } catch (error) {
     if (!isReadOnlyError(error)) throw error;
+    console.error("Ledger append fell back to non-durable process memory.", error);
     useEphemeral(state.records);
     appendMemory(record);
   }
@@ -155,6 +163,7 @@ export function reset(): void {
     writeFileSync(LEDGER_PATH, "", "utf8");
   } catch (error) {
     if (!isReadOnlyError(error)) throw error;
+    console.error("Ledger reset fell back to non-durable process memory.", error);
     useEphemeral([]);
   }
 }
