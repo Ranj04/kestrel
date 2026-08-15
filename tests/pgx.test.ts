@@ -22,7 +22,7 @@ import type { Patient } from "../lib/contracts.ts";
 import { fdaAssociation, loadFdaTable } from "../lib/pgx/fda.ts";
 import * as llm from "../lib/llm.ts";
 import { assess } from "../lib/credibility.ts";
-import { evaluate, severityOf } from "../lib/pgx/evaluate.ts";
+import { assessGenes, evaluate, severityOf } from "../lib/pgx/evaluate.ts";
 import { getIndex, getPatient, type CpicEntry, type CpicIndex } from "../lib/pgx/index.ts";
 import { coverageFor } from "../lib/pgx/policy.ts";
 import { resolveDrug } from "../lib/pgx/resolve.ts";
@@ -102,6 +102,72 @@ test("pt_bhattacharya + capecitabine: no genotype -> no alert, coverage pended",
   assert.ok(cov);
   assert.equal(cov.clauseId, "PA-ONC-014.1");
   assert.equal(cov.determination, "pended");
+});
+
+// ------------------------------------------- gene coverage (phase6 fix round)
+//
+// evaluate() returning null is ambiguous: "assessed, nothing raised" and "the
+// relevant gene was never tested" are the identical null. assessGenes() carries
+// the disambiguating facts. The fixture that matters is pt_reyes + capecitabine
+// — a real patient with a result for the WRONG gene, which the phase6 review
+// caught rendering as a green clearance.
+
+test("assessGenes: Reyes + capecitabine — DPYD not assessed; his CYP2D6 result does not count", () => {
+  const genes = assessGenes(patient("pt_reyes"), "capecitabine");
+  assert.ok(genes, "capecitabine has a CPIC bucket, so the answer is a list, not null");
+  // The list is the DRUG's genes, not the patient's: CYP2D6 (which Reyes has)
+  // is irrelevant to capecitabine and must not appear at all.
+  assert.deepEqual(
+    genes.map((g) => g.gene),
+    ["DPYD"],
+  );
+  assert.equal(genes[0].assessed, false, "no DPYD result -> not assessed, never a pass");
+  assert.equal(genes[0].resultOnFile, false);
+  assert.equal(genes[0].phenotype, null);
+});
+
+test("assessGenes: Lindqvist + capecitabine — DPYD genuinely assessed, display fields carried", () => {
+  const p = patient("pt_lindqvist");
+  const genes = assessGenes(p, "capecitabine");
+  assert.ok(genes);
+  assert.equal(genes.length, 1);
+  const dpyd = p.results.find((r) => r.gene === "DPYD");
+  assert.ok(dpyd);
+  assert.deepEqual(genes[0], {
+    gene: "DPYD",
+    assessed: true,
+    resultOnFile: true,
+    phenotype: dpyd.phenotype, // "Normal Metabolizer", from patients.json itself
+    diplotype: dpyd.diplotype,
+  });
+});
+
+test("assessGenes: a result whose lookup matches no CPIC row is NOT assessed (R-6's silent join)", () => {
+  // The exact historical defect shape: phenotype name written where the
+  // activity-score join key belongs. The join finds nothing, and that absence
+  // must surface as assessed:false + resultOnFile:true — never as a pass.
+  const p: Patient = {
+    ...syntheticPatient,
+    results: [
+      {
+        gene: "DPYD",
+        diplotype: "synthetic",
+        lookup: "Poor Metabolizer", // matches nothing; the key is "0.0"
+        phenotype: "Poor Metabolizer",
+        source: "synthetic",
+        reportedAt: "2026-08-13T00:00:00Z",
+      },
+    ],
+  };
+  const genes = assessGenes(p, "capecitabine");
+  assert.ok(genes);
+  assert.equal(genes[0].gene, "DPYD");
+  assert.equal(genes[0].assessed, false, "an unmatched lookup must not count as assessed");
+  assert.equal(genes[0].resultOnFile, true, "…but the result's existence is stated honestly");
+});
+
+test("assessGenes: no CPIC guideline for the drug -> null, mirroring evaluate()", () => {
+  assert.equal(assessGenes(patient("pt_reyes"), "florblexin"), null);
 });
 
 // ------------------------------------------------------------- D6: the guard

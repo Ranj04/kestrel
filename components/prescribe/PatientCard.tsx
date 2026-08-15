@@ -26,7 +26,7 @@ export function PatientCard({
           <button
             key={p.patientId}
             onClick={() => onSelect(p.patientId)}
-            className={`flex-1 truncate px-2 py-1 font-mono text-[11px] ${
+            className={`flex-1 truncate px-2 py-1 font-mono text-xs ${
               p.patientId === patient.patientId
                 ? "bg-ink font-semibold text-paper"
                 : "text-ink-soft hover:bg-line/40"
@@ -38,16 +38,20 @@ export function PatientCard({
       </div>
 
       <div className="px-4 py-2">
-        <p className="font-display text-base leading-tight">
+        <p className="font-display text-base font-semibold leading-tight">
           {patient.displayName}
-          <span className="ml-3 font-mono text-[11px] text-ink-soft">
+          <span className="ml-3 font-mono text-xs font-normal text-ink-soft">
             MRN {patient.mrn} · {patient.age} {patient.sex}
           </span>
         </p>
-        <p className="mt-0.5 text-[12px] text-ink-soft">{patient.indication}</p>
+        {/* patient.meta per the import: mono, uppercase, wide-tracked — an
+            uppercase TRANSFORM only; the indication string itself is untouched. */}
+        <p className="mt-0.5 font-mono text-xs uppercase tracking-[0.1em] text-ink-soft">
+          {patient.indication}
+        </p>
 
         {patient.results.length === 0 ? (
-          <p className="mt-2 font-mono text-[11px] text-amber">No genotype on file.</p>
+          <p className="mt-2 font-mono text-xs text-amber">No genotype on file.</p>
         ) : (
           <>
             {/* R-19: the provenance rides IN the chip row rather than on its own
@@ -56,7 +60,7 @@ export function PatientCard({
               {patient.results.map((r) => (
                 <span
                   key={r.gene}
-                  className="border border-line bg-paper px-2 py-0.5 font-mono text-[11px]"
+                  className="border border-line bg-paper px-2 py-0.5 font-mono text-xs"
                 >
                   <span className="font-semibold">{r.gene}</span> {r.diplotype}{" "}
                   {/* display name only; diplotype already shown covers HLA-style null phenotypes.
@@ -66,7 +70,7 @@ export function PatientCard({
                   {r.phenotype && <span className="font-semibold">· {r.phenotype}</span>}
                 </span>
               ))}
-              <span className="font-mono text-[10px] text-ink-soft">
+              <span className="font-mono text-xs text-ink-soft">
                 {/* provenance, verbatim from patients.json `source` */}
                 {[...new Set(patient.results.map((r) => r.source))].join(" · ")}
               </span>

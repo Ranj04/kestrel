@@ -593,3 +593,62 @@ record, which is another repo. R-3 and R-4 are stated limitations, not defects.
 R-15 is stretch. R-21 is a documented design choice — the FDA badge shows every row
 the table carries for a pair, because `affected_subgroups` is regulatory prose and
 filtering it would be an editorial judgement on regulatory text.
+
+## R-24 · OPEN · OrderForm keeps its typed text across patient switches
+
+Surfaced while driving the demo states for the phase6 visual pass: `drugRaw` is
+`OrderForm`'s own `useState` and the component is not remounted when the patient
+changes, so text typed for one patient is still in the box for the next — typing
+without clearing first CONCATENATES ("Xeloda 1250 mg/m2 BIDXeloda 1250 mg/m2 BID"
+went to the resolver during measurement, and resolved via substring anyway).
+No clinical-correctness impact (the response is cleared on switch, and resolution
+renders whatever was actually sent), but a presenter who tabs mid-demo without
+clearing the field will place a garbage order on camera.
+
+**Not fixed here deliberately:** phase6 is a visual pass — "do not change any prop
+signature", "a red test means you exceeded scope". Clearing state on patient switch
+is a behaviour change in a file the phase touches only for paint.
+
+**Fix:** lift `drugRaw` reset into `selectPatient` (page.tsx already clears every
+other piece of response state there), or key `<OrderForm>` on `patientId`. One
+line either way; needs a test that switching patients empties the field.
+
+## R-25 · OPEN, DELIBERATE · a D6-conflict-suppressed gene renders as the "assessed" line
+
+Surfaced while building `assessGenes()` (phase6 fix round). When the D6 guard finds
+conflicting CPIC rows for a matched lookup, `evaluate()` deliberately raises no alert
+— and `assessGenes()` reports that gene `assessed: true`, because the join genuinely
+matched. The screen then shows the green procedural line for a gene whose answer the
+engine deliberately refused to give. Sol's severity-1 finding named this conflation
+("a CPIC no-action row and a D6 conflict suppressed as null" render identically).
+
+**Why it ships this way:** the green line's wording was chosen to stay literally true
+in this case — "GENE assessed — <phenotype>. No CPIC alert raised" states what the
+engine did, and the engine did raise nothing (with a logged conflict). No demo
+patient hits a conflicting triple, and distinguishing the case means carrying
+conflict state through the response — a contract and renderer change beyond this
+round's brief.
+
+**Fix:** add a `conflict: boolean` (or a third `assessed` state) to `GeneAssessment`,
+populated from the same disagree logic the D6 guard runs, and render it as an amber
+"conflicting CPIC rows — no determination" line. The sweep test in `pgx.test.ts`
+already enumerates every real conflicting triple to pin it with.
+
+## R-26 · OPEN, DELIBERATE · credibility says "No human control required." under an incomplete screening
+
+Observed in the browser while verifying the fix: pt_reyes + capecitabine now renders
+the amber "DPYD not assessed … screening incomplete" line, and directly below it the
+credibility card says "No human control required." with the `auto` cell lit. That is
+`assess(null)` doing its job — it rates the MODEL's influence on the decision, and no
+model output influenced anything — and its rationale ("No CPIC-actionable finding was
+raised, so the system contributes nothing to this decision") is procedurally true.
+But a skimming reader can take "no human control required" as an endorsement of
+proceeding unscreened.
+
+**Not fixed here:** `lib/credibility.ts` wording is FDA-framework language about AI
+influence, not a clinical claim, and redesigning the credibility taxonomy to carry a
+"screening incomplete" context is beyond this round. Recorded so the demo narration
+never leans on that line for an unscreened patient.
+
+**Fix:** pass gene-coverage facts into `assess()` and add a context sentence to the
+rationale for the not-assessed case (still procedural, still no clinical language).

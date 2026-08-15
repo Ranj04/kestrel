@@ -85,58 +85,58 @@ function SignatureModalForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4" role="dialog" aria-modal="true" aria-labelledby="signature-title">
-      <form onSubmit={(event) => void submit(event)} className="w-full max-w-lg border border-[#d8cdbb] bg-[#faf6ee] p-5 text-[#211c18] shadow-2xl">
+      <form onSubmit={(event) => void submit(event)} className="w-full max-w-lg border border-line bg-paper-raised p-5 text-ink">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="font-mono text-[10px] tracking-[0.18em] text-[#6b6258]">21 CFR PART 11 SIGNATURE</p>
+            <p className="font-mono text-xs tracking-[0.18em] text-ink-soft">21 CFR PART 11 SIGNATURE</p>
             <h2 id="signature-title" className="mt-1 text-xl font-semibold">Override and sign</h2>
           </div>
-          <button type="button" onClick={onClose} className="font-mono text-xs text-[#6b6258] hover:text-[#211c18]">Close</button>
+          <button type="button" onClick={onClose} className="font-mono text-xs text-ink-soft hover:text-ink">Close</button>
         </div>
 
-        <p className="mt-3 border-l-2 border-[#cf4520] pl-3 text-sm leading-snug">
+        <p className="mt-3 border-l-2 border-accent pl-3 text-sm leading-snug">
           You are overriding the CPIC recommendation for {alert.gene} · {alert.drugName}.
         </p>
 
-        <label className="mt-4 block font-mono text-[11px] font-semibold">
+        <label className="mt-4 block font-mono text-xs font-semibold">
           Printed name
-          <input required value={printedName} onChange={(event) => setPrintedName(event.target.value)} className="mt-1 w-full border border-[#d8cdbb] bg-white px-3 py-2 font-sans text-sm outline-none focus:border-[#211c18]" />
+          <input required value={printedName} onChange={(event) => setPrintedName(event.target.value)} className="mt-1 w-full border border-line bg-paper-raised px-3 py-2 font-display text-sm outline-none focus:border-ink" />
         </label>
 
-        <label className="mt-3 block font-mono text-[11px] font-semibold">
+        <label className="mt-3 block font-mono text-xs font-semibold">
           Meaning of signature
-          <select value={meaning} onChange={(event) => setMeaning(event.target.value as SignatureMeaning)} className="mt-1 w-full border border-[#d8cdbb] bg-white px-3 py-2 font-sans text-sm outline-none focus:border-[#211c18]">
+          <select value={meaning} onChange={(event) => setMeaning(event.target.value as SignatureMeaning)} className="mt-1 w-full border border-line bg-paper-raised px-3 py-2 font-display text-sm outline-none focus:border-ink">
             <option value="authorship">Authorship</option>
             <option value="review">Review</option>
             <option value="approval">Approval</option>
           </select>
         </label>
 
-        <label className="mt-3 block font-mono text-[11px] font-semibold">
-          Rationale <span className="font-normal text-[#6b6258]">— minimum 20 characters</span>
-          <textarea required minLength={20} rows={3} value={rationale} onChange={(event) => setRationale(event.target.value)} className="mt-1 w-full resize-none border border-[#d8cdbb] bg-white px-3 py-2 font-sans text-sm outline-none focus:border-[#211c18]" placeholder="Document the patient-specific reason for overriding this recommendation." />
+        <label className="mt-3 block font-mono text-xs font-semibold">
+          Rationale <span className="font-normal text-ink-soft">— minimum 20 characters</span>
+          <textarea required minLength={20} rows={3} value={rationale} onChange={(event) => setRationale(event.target.value)} className="mt-1 w-full resize-none border border-line bg-paper-raised px-3 py-2 font-display text-sm outline-none focus:border-ink" placeholder="Document the patient-specific reason for overriding this recommendation." />
         </label>
 
-        <div className="mt-3 border border-[#d8cdbb] bg-[#f3ece0] px-3 py-2">
-          <p className="font-mono text-[10px] text-[#6b6258]">Date/time · displayed live, set by the ledger on submit</p>
+        <div className="mt-3 border border-line bg-paper px-3 py-2">
+          <p className="font-mono text-xs text-ink-soft">Date/time · displayed live, set by the ledger on submit</p>
           <time className="font-mono text-xs font-semibold">{now.toISOString()}</time>
         </div>
 
-        {error && <p className="mt-3 font-mono text-xs text-[#a8350f]">{error}</p>}
+        {error && <p className="mt-3 font-mono text-xs text-accent-deep">{error}</p>}
 
         <div className="mt-5 flex items-center justify-between gap-3">
           <button
             type="button"
             disabled={busy !== null}
             onClick={() => void record("accept", { alertId: alert.alertId, orderId: alert.orderId, actor })}
-            className="border border-[#1f5d4c] px-3 py-2 font-mono text-[11px] text-[#1f5d4c] hover:bg-[#1f5d4c]/10 disabled:opacity-40"
+            className="border border-seal px-3 py-2 font-mono text-xs text-seal hover:bg-seal/10 disabled:opacity-40"
           >
             {busy === "accept" ? "Recording…" : "Accept recommendation"}
           </button>
           <button
             type="submit"
             disabled={busy !== null || printedName.trim() === "" || rationale.trim().length < 20}
-            className="bg-[#cf4520] px-4 py-2 font-mono text-[11px] font-semibold text-white hover:bg-[#a8350f] disabled:cursor-not-allowed disabled:opacity-40"
+            className="bg-accent px-4 py-2 font-mono text-xs font-semibold text-paper-raised hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-40"
           >
             {busy === "override" ? "Signing…" : "Sign override"}
           </button>

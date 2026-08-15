@@ -1,0 +1,140 @@
+<!--
+  SOL'S HALF of the design import, extracted verbatim from Attest.dc.html and
+  entity-decoded. Reference only — do not apply as a patch, do not copy the raw px.
+  Every font-size below maps through docs/design-import/README.md:  13 -> --step--1,
+  15 -> --step-0.  The ledger pane is almost entirely mono at 13 (-> --step--1).
+  Colours already tokens: #1a1512 --void, #f3ece0 --paper, #57a184 --seal-void,
+  #e2582c --accent-void, #cf4520 --accent, #1f5d4c --seal, #d8cdbb --line.
+  NOTE the deliberate split: TEXT on the void uses the lifted --seal-void/--accent-void;
+  the 4px RULES keep the exact --accent #cf4520. That is deviation 5 and it is an
+  accessibility fix, not a palette addition.
+-->
+
+<!-- ============ RIGHT PANE: flex:1 (576px of 1280), padding 20px 24px, void ground ============ -->
+<div style="flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;padding:20px 24px;background:#1a1512">
+
+  <!-- HEADER, broken. One line, mono, uppercase, 0.06em, weight 500, accent-void.
+       6g asks for --step-1; the mockup keeps it at 13 mono because an all-caps mono
+       line at 0.06em already reads as an alarm on a black field. If you go to --step-1
+       keep it MONO and keep the tracking — a serif here reads as prose, not as a fault. -->
+  <div style="flex:none;font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:#e2582c">Chain broken at record 4 — records 4–6 not trustworthy</div>
+
+  <!-- HEADER, intact. Label left, status right, baseline-aligned, tabular-nums. -->
+  <div style="flex:none;display:flex;align-items:baseline;justify-content:space-between;gap:16px">
+    <div style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;letter-spacing:0.18em;text-transform:uppercase;color:rgba(243,236,224,0.5)">Ledger</div>
+    <div style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;letter-spacing:0.06em;text-transform:uppercase;color:#57a184;font-variant-numeric:tabular-nums">chain intact · 6 records · verified 14:31:44.207 ✓</div>
+  </div>
+
+  <div style="flex:none;margin-top:8px;height:1px;background:rgba(243,236,224,0.16)"></div>
+
+  <!-- ============ SUPERSEDED (6i). Deviation 7: INVERTED, not coloured.
+       A solid --paper block set into the black pane. Ink text. SUPERSEDED struck
+       through in ink; VALID in forest. Chain status above stays GREEN.
+       Different MEDIUM, not a different red — that is what keeps it distinguishable
+       from a broken chain at a glance. Do NOT reach for vermilion here. ============ -->
+  <div style="flex:none;margin-top:16px;padding:16px;background:#f3ece0;border-radius:2px">
+    <div style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:#211c18">Authorization superseded · evidence revised</div>
+    <div style="margin-top:8px;font-size:15px;line-height:1.5;color:#211c18">CPIC DPYD/fluoropyrimidines v2025.2 → v2026.1. Overrides signed under the prior recommendation were re-evaluated.</div>
+    <div style="margin-top:16px;height:1px;background:#d8cdbb"></div>
+
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:6px 0;border-bottom:1px solid #d8cdbb">
+      <span style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;color:#6b6258;font-variant-numeric:tabular-nums">override #5 · MRN 4417-2 · 14:22:07.481</span>
+      <span style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:#211c18;text-decoration:line-through">Superseded</span>
+    </div>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:6px 0">
+      <span style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;color:#6b6258;font-variant-numeric:tabular-nums">override #2 · MRN 5182-6 · 11:18:44.902</span>
+      <span style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:#1f5d4c">Valid</span>
+    </div>
+  </div>
+
+  <!-- ============ THE RECORD LIST ============ -->
+  <div ref="listRef" style="flex:1;min-height:0;margin-top:8px;display:flex;flex-direction:column">
+
+    <!-- ROW. rowStyle = padding:4px 0 5px 12px  +  border-left:4px solid <accent|transparent>
+         + border-bottom:1px solid rgba(243,236,224,0.10)
+         The 4px left rule is ALWAYS present, transparent when intact. That is what keeps
+         the text from shifting 4px when the chain breaks. Broken rows: #cf4520 + opacity 0.6.
+         NO transition on this — the break must be instant. -->
+    <div data-rid="{{ rec.id }}" style="padding:4px 0 5px 12px;border-left:4px solid transparent;border-bottom:1px solid rgba(243,236,224,0.10)">
+
+      <!-- line 1: "#n  type" left, timestamp right. tabular-nums on the timestamp is
+           what actually produces 6h's aligned mono column. Without it they do not align. -->
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
+        <span style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;letter-spacing:0.02em;color:rgba(243,236,224,0.92)"><span style="color:rgba(243,236,224,0.4)">#4</span>  alert.raised</span>
+        <span style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;color:rgba(243,236,224,0.55);font-variant-numeric:tabular-nums">14:22:02.117</span>
+      </div>
+
+      <!-- line 2: actor · role · CFR clause. 55% paper. -->
+      <div style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;color:rgba(243,236,224,0.55)">attest.engine · rule DPYD-CAP-01 · 21CFR11.10(e)</div>
+
+      <!-- line 3: detail. 40% paper — the THIRD tier. Three opacities, not three greys. -->
+      <div style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;color:rgba(243,236,224,0.4)">CPIC Level A · avoid fluoropyrimidines · blocking</div>
+
+      <!-- override rows only: the signed rationale, in SERIF at 15 (-> --step-0), 85% paper.
+           The one place the ledger is not mono — a human sentence looks like a human sentence. -->
+      <div style="margin-top:6px;max-width:480px;font-family:Fraunces;font-size:15px;line-height:1.45;color:rgba(243,236,224,0.85);text-wrap:pretty">"Patient has failed two prior regimens; proceeding at 25% dose with weekly DPD monitoring."</div>
+      <div style="margin-top:6px;font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;color:rgba(243,236,224,0.55)">signed — approval</div>
+      <div style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;color:rgba(243,236,224,0.4)">21CFR11.50 · signature manifestation: name, date/time, meaning</div>
+
+      <!-- last line: hash chain left, mark right.
+           hashLine reads "prev 9f02d8… → sha256 2e6b41…" — 6 chars, ellipsis, both ends.
+           Deviation 10: MISMATCH REPLACES the ✓ on broken rows. Never both. -->
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
+        <span style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;color:rgba(243,236,224,0.4)">prev 9f02d8… → sha256 2e6b41…</span>
+        <span style="font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;letter-spacing:0;color:#57a184">✓</span>
+        <!-- broken: letter-spacing:0.12em; color:#e2582c; text MISMATCH -->
+      </div>
+    </div>
+
+    <!-- THE BOUNDARY. A 1px vermilion rule between the last broken row and the first
+         intact one. Newest-first, so broken rows sit ABOVE it. This single rule is
+         "the boundary between green and red" that 6g says is the whole point. -->
+    <div style="height:1px;background:#cf4520"></div>
+
+    <!-- elision line, superseded state only (deviation 8) -->
+    <div style="padding:6px 0 0 16px;font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;color:rgba(243,236,224,0.4)">· records 1–4 unchanged · verified · not shown ·</div>
+  </div>
+
+  <!-- ============ ACTIONS: mono, uppercase, 0.06em, 28% border, 6px/10px.
+       Deliberately quieter than the left pane's buttons — these are instrument
+       controls, not clinical actions. ============ -->
+  <div style="flex:none;height:1px;background:rgba(243,236,224,0.16)"></div>
+  <div style="flex:none;margin-top:16px;display:flex;gap:8px">
+    <button style="padding:6px 10px;border:1px solid rgba(243,236,224,0.28);border-radius:2px;font-family:'IBM Plex Mono';font-size:13px;line-height:1.35;letter-spacing:0.06em;text-transform:uppercase;color:rgba(243,236,224,0.7);white-space:nowrap;flex:none" style-hover="border-color:rgba(243,236,224,0.6);color:#f3ece0">Verify chain</button>
+    <button style="...same...">Tamper a record</button>
+    <button style="...same...">Publish policy revision</button>
+  </div>
+</div>
+
+<!--
+  ============ THE ANIMATION GATE — copy this behaviour (6f) ============
+  From the mockup's _sync(). The load-bearing part is `_shown`: rows animate on FIRST
+  APPEARANCE ONLY. Without the seen-id gate the whole ledger re-animates on every
+  render and the pane flickers on every action.
+
+    _shown = new Set();
+
+    _sync(animate) {
+      const rows = Array.from(el.querySelectorAll('[data-rid]'));
+      const fresh = [];
+      rows.forEach(r => { const id = r.getAttribute('data-rid');
+                          if (!this._shown.has(id)) { this._shown.add(id); fresh.push(r); } });
+      if (!fresh.length) return;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!animate || reduced || !fresh[0].animate) return;         // <- reduced-motion path
+      fresh.reverse().forEach((r, i) => {                            // <- oldest -> newest
+        r.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
+          { duration: 200, delay: i * 60, easing: 'cubic-bezier(0.2,0,0.2,1)', fill: 'backwards' });
+      });
+    }
+
+  And the instant-tamper gate, which is the whole of 6f's second half:
+
+    const instant = this.state.ledger === 'broken' && prevState.ledger !== 'broken';
+    this._sync(!instant);        // entering the broken state animates NOTHING
+
+  Our repo has a `.rise` keyframe in globals.css (0.7s) rather than the WAAPI call
+  above. Use `.rise` with a per-row animation-delay — it already has the
+  prefers-reduced-motion override wired. Do NOT edit globals.css to retime it;
+  that file is Fable's this phase. File .sol/requests/token-<name>.md instead.
+-->

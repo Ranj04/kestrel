@@ -167,6 +167,27 @@ export interface Credibility {
   rationale: string;
 }
 
+/** Per-gene assessment coverage for the resolved drug — one entry for EVERY
+ *  gene CPIC associates with that drug (the keys of the drug's index bucket).
+ *  Procedural facts only: what was checked and what was on file, never a
+ *  clinical conclusion.
+ *
+ *  `assessed` is true ONLY when the patient has a result for the gene AND that
+ *  result's `lookup` matched at least one CPIC row. A result on file whose
+ *  lookup matches nothing is NOT assessed — that is the silent-join failure
+ *  R-6 is about, and it must never render as a pass. */
+export interface GeneAssessment {
+  gene: string;
+  assessed: boolean;
+  /** the patient has a GeneResult for this gene. false + assessed=false means
+   *  "no result on file"; true + assessed=false means the lookup matched no
+   *  CPIC row. The renderer words the two differently — both are amber. */
+  resultOnFile: boolean;
+  /** from the patient's own result, display only. null when no result on file. */
+  phenotype: string | null;
+  diplotype: string | null;
+}
+
 export interface PrescribeResponse {
   order: Order;
   alert: Alert | null;
@@ -174,6 +195,12 @@ export interface PrescribeResponse {
    *  (Lindqvist covered, Bhattacharya pended) and their coverage determination
    *  must still render. Alert.coverage is the copy shown inside the alert card. */
   coverage: Coverage | null;
+  /** null when the drug resolved to no CPIC guideline (resolution.matched is
+   *  false). ABSENCE OF A RESULT IS NOT EVIDENCE OF SAFETY: the renderer must
+   *  treat any relevant gene with assessed=false as an unknown, never a
+   *  clearance — pt_reyes + capecitabine (a CYP2D6 result, no DPYD result) is
+   *  the live case this field exists for. */
+  genesAssessed: GeneAssessment[] | null;
   credibility: Credibility;
   resolution: {
     matched: boolean;

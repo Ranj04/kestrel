@@ -6,6 +6,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import JSZip from "jszip";
 import type { Actor, EvidenceSnapshot, LedgerEventType, LedgerRecord } from "../lib/contracts.ts";
+import type { VerificationDetails } from "../lib/ledger/verify.ts";
 import { hashRecord, stableHash } from "../lib/ledger/hash.ts";
 import { recordOverride } from "../lib/ledger/override.ts";
 import { activeRevisionStatus, authorizationStatus, resetSnapshotState } from "../lib/ledger/snapshot.ts";
@@ -15,6 +16,15 @@ import { verify } from "../lib/ledger/verify.ts";
 import { evaluate } from "../lib/pgx/evaluate.ts";
 import { getPatient } from "../lib/pgx/index.ts";
 import { AuthorizationPanel } from "../components/ledger/AuthorizationPanel.tsx";
+import { ChainStatus } from "../components/ledger/ChainStatus.tsx";
+import { RecordRow } from "../components/ledger/RecordRow.tsx";
+import {
+  elisionLabel,
+  invalidateLedgerRequests,
+  planVisibleRecords,
+  refreshLedger,
+  type LedgerResponse,
+} from "../components/ledger/index.tsx";
 import { GET as ledgerGet } from "../app/api/ledger/route.ts";
 import { POST as exportPost } from "../app/api/ledger/export/route.ts";
 import { POST as resetPost } from "../app/api/ledger/reset/route.ts";
@@ -259,4 +269,256 @@ test("policy revision selectively supersedes capecitabine, preserves codeine, an
 test("ledger UI publishes through the evidence supersede API call site", () => {
   const source = readFileSync(join(process.cwd(), "components", "ledger", "index.tsx"), "utf8");
   assert.match(source, /fetch\("\/api\/evidence\/supersede", \{ method: "POST" \}\)/);
+});
+
+function uiVerification(
+  values: Partial<VerificationDetails> = {},
+): VerificationDetails {
+  return {
+    ok: true,
+    total: 1,
+    firstBrokenSeq: null,
+    brokenSeqs: [],
+    checkedAt: "2026-08-14T23:00:00.000Z",
+    expectedHash: null,
+    foundHash: null,
+    ...values,
+  };
+}
+
+function uiLedgerResponse(verify: VerificationDetails): LedgerResponse {
+  return {
+    records: [],
+    authorizations: [],
+    revision: null,
+    verify,
+    ephemeral: false,
+  };
+}
+
+function fetchResponse(body: LedgerResponse): Response {
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+test("ledger refresh discards an older response that resolves after the latest request", async () => {
+  const pending: Array<(response: Response) => void> = [];
+  const fetcher = (() =>
+    new Promise<Response>((resolve) => {
+      pending.push(resolve);
+    })) as typeof fetch;
+  const applied: VerificationDetails[] = [];
+  const errors: string[] = [];
+  const requestToken = { current: 0 };
+  const callbacks = {
+    apply: (body: LedgerResponse) => applied.push(body.verify),
+    reject: (message: string) => errors.push(message),
+  };
+
+  const stale = refreshLedger(requestToken, callbacks, fetcher);
+  const latest = refreshLedger(requestToken, callbacks, fetcher);
+  assert.equal(pending.length, 2, "the fixture must overlap two dispatched requests");
+
+  const broken = uiVerification({
+    ok: false,
+    firstBrokenSeq: 0,
+    brokenSeqs: [0],
+    expectedHash: "sha256:expected",
+    foundHash: "sha256:found",
+  });
+  pending[1](fetchResponse(uiLedgerResponse(broken)));
+  await latest;
+  pending[0](fetchResponse(uiLedgerResponse(uiVerification())));
+  await stale;
+
+  assert.deepEqual(applied, [broken]);
+  assert.deepEqual(errors, []);
+});
+
+test("an action dispatch invalidates an already-running ledger poll", async () => {
+  let resolvePoll!: (response: Response) => void;
+  const fetcher = (() =>
+    new Promise<Response>((resolve) => {
+      resolvePoll = resolve;
+    })) as typeof fetch;
+  const applied: LedgerResponse[] = [];
+  const errors: string[] = [];
+  const requestToken = { current: 0 };
+  const poll = refreshLedger(
+    requestToken,
+    {
+      apply: (body) => applied.push(body),
+      reject: (message) => errors.push(message),
+    },
+    fetcher,
+  );
+
+  invalidateLedgerRequests(requestToken);
+  resolvePoll(fetchResponse(uiLedgerResponse(uiVerification())));
+  await poll;
+
+  assert.deepEqual(applied, []);
+  assert.deepEqual(errors, []);
+});
+
+test("RecordRow renders a complete millisecond timestamp", () => {
+  const record: LedgerRecord = {
+    seq: 0,
+    recordId: "rec_timestamp",
+    type: "order.placed",
+    occurredAt: "2026-08-14T16:27:28.581Z",
+    actor: { id: "dr_test", name: "Dr. Test", role: "Attending" },
+    payload: {},
+    clauses: [],
+    prevHash: "sha256:previous",
+    hash: "sha256:current",
+  };
+  const html = renderToStaticMarkup(
+    createElement(RecordRow, { record, verification: uiVerification() }),
+  );
+  const rendered = html.match(/<time[^>]*>([^<]+)<\/time>/)?.[1];
+
+  assert.ok(rendered, "the row must render a time element");
+  assert.match(rendered, /^\d{2}:\d{2}:\d{2}\.\d{3}$/);
+});
+
+const noop = () => {};
+
+test("ChainStatus uses singular copy when only one record is untrustworthy", () => {
+  const html = renderToStaticMarkup(
+    createElement(ChainStatus, {
+      verification: uiVerification({
+        ok: false,
+        total: 3,
+        firstBrokenSeq: 2,
+        brokenSeqs: [2],
+      }),
+      verificationError: null,
+      ephemeral: false,
+      tamperNotice: null,
+      busy: null,
+      canSupersede: false,
+      onVerify: noop,
+      onTamper: noop,
+      onSupersede: noop,
+      onReset: noop,
+      onExport: noop,
+    }),
+  );
+
+  assert.match(html, /RECORD 2 NOT TRUSTWORTHY/);
+  assert.doesNotMatch(html, /RECORDS 2 NOT TRUSTWORTHY/);
+});
+
+test("ChainStatus keeps plural range copy when multiple records are untrustworthy", () => {
+  const html = renderToStaticMarkup(
+    createElement(ChainStatus, {
+      verification: uiVerification({
+        ok: false,
+        total: 5,
+        firstBrokenSeq: 2,
+        brokenSeqs: [2, 3, 4],
+      }),
+      verificationError: null,
+      ephemeral: false,
+      tamperNotice: null,
+      busy: null,
+      canSupersede: false,
+      onVerify: noop,
+      onTamper: noop,
+      onSupersede: noop,
+      onReset: noop,
+      onExport: noop,
+    }),
+  );
+
+  assert.match(html, /RECORDS 2–4 NOT TRUSTWORTHY/);
+});
+
+test("supersede-then-tamper keeps the cascade, boundary row, and verified elision count", () => {
+  const records = Array.from({ length: 7 }, (_, seq): LedgerRecord => ({
+    seq,
+    recordId: `rec_${seq}`,
+    type: "order.placed",
+    occurredAt: "2026-08-14T16:27:28.581Z",
+    actor: { id: "dr_test", name: "Dr. Test", role: "Attending" },
+    payload: {},
+    clauses: [],
+    prevHash: `sha256:previous_${seq}`,
+    hash: `sha256:current_${seq}`,
+  }));
+  const result = uiVerification({
+    ok: false,
+    total: 7,
+    firstBrokenSeq: 4,
+    brokenSeqs: [4, 5, 6],
+  });
+  const plan = planVisibleRecords(records, result, true);
+
+  assert.deepEqual(plan.visible.map((record) => record.seq), [6, 5, 4, 3]);
+  assert.deepEqual(plan.elided.map((record) => record.seq), [2, 1, 0]);
+  assert.equal(plan.elidedVerified, true);
+  assert.equal(
+    elisionLabel(plan),
+    "· 3 records (0–2) unchanged · verified · not shown ·",
+  );
+});
+
+test("the elision label never claims verified without a current verification", () => {
+  const record: LedgerRecord = {
+    seq: 0,
+    recordId: "rec_unknown",
+    type: "order.placed",
+    occurredAt: "2026-08-14T16:27:28.581Z",
+    actor: { id: "dr_test", name: "Dr. Test", role: "Attending" },
+    payload: {},
+    clauses: [],
+    prevHash: "sha256:previous",
+    hash: "sha256:current",
+  };
+  const label = elisionLabel({
+    visible: [],
+    elided: [record],
+    elidedVerified: false,
+  });
+
+  assert.ok(label);
+  assert.doesNotMatch(label, /verified/);
+});
+
+test("LedgerPane applies fresh-row stagger in a layout effect", () => {
+  const source = readFileSync(
+    join(process.cwd(), "components", "ledger", "index.tsx"),
+    "utf8",
+  );
+
+  assert.match(
+    source,
+    /typeof window === "undefined" \? useEffect : useLayoutEffect/,
+  );
+  assert.match(
+    source,
+    /useBrowserLayoutEffect\(\(\) => \{\s+const rows = Array\.from/,
+  );
+});
+
+test("every ledger action invalidates old polls and interval polls pause during actions", () => {
+  const source = readFileSync(
+    join(process.cwd(), "components", "ledger", "index.tsx"),
+    "utf8",
+  );
+
+  assert.match(
+    source,
+    /if \(actionInFlight\.current && !duringAction\) return false;/,
+  );
+  for (const action of ["verify", "tamper", "reset", "supersede", "export"]) {
+    assert.match(source, new RegExp(`beginAction\\("${action}"\\)`));
+  }
+  assert.match(
+    source,
+    /const dispatchedToken = invalidateLedgerRequests\(latestRequest\);/,
+  );
 });

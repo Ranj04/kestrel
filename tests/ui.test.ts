@@ -16,7 +16,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import type { Alert, Patient, PrescribeResponse } from "../lib/contracts.ts";
 import { assess } from "../lib/credibility.ts";
-import { evaluate } from "../lib/pgx/evaluate.ts";
+import { assessGenes, evaluate } from "../lib/pgx/evaluate.ts";
 import { getPatient } from "../lib/pgx/index.ts";
 import { coverageFor } from "../lib/pgx/policy.ts";
 import { AlertCard } from "../components/prescribe/AlertCard.tsx";
@@ -52,6 +52,9 @@ function respond(p: Patient, drugName: string): PrescribeResponse {
     },
     alert,
     coverage: coverageFor(p, drugName),
+    // Same derivation the route uses — the component must receive these facts,
+    // never re-derive them (the route-level call-site pin is prescribe.test.ts).
+    genesAssessed: assessGenes(p, drugName),
     credibility: assess(alert),
     resolution: { matched: true, method: "exact", candidates: [] },
   };
@@ -94,16 +97,57 @@ test("AlertCard critical: Okafor + capecitabine renders CPIC's recommendation ve
   assert.ok(visible.includes("Poor Metabolizer"), "the stripped text still carries the phenotype");
 });
 
-test("AlertCard none: Lindqvist + capecitabine renders the quiet green line, NO card", () => {
+// PHASE6 FIX ROUND, disclosed: this test previously asserted the literal
+// "No pharmacogenomic contraindication" — a clinical conclusion the app
+// authored itself (severity-1 finding, phase6-sol-on-fable.md). The pin moved
+// WITH the deliberate behaviour change: the green line now states what was
+// checked and what was found, procedurally, and this test pins that instead.
+test("AlertCard none: Lindqvist + capecitabine states what was checked — never a clinical conclusion of ours", () => {
   const p = patient("pt_lindqvist");
   const response = respond(p, "capecitabine");
   assert.equal(response.alert, null, "normal metabolizer must not alert");
   const html = renderAlertCard(response, p);
 
-  assert.ok(html.includes("No pharmacogenomic contraindication"), "green line renders");
-  assert.ok(html.includes("DPYD Normal Metabolizer"), "gene + phenotype from patients.json");
+  assert.ok(html.includes("DPYD assessed"), "names the gene that was actually checked");
+  assert.ok(html.includes("Normal Metabolizer"), "and the phenotype found (patients.json)");
+  assert.ok(html.includes("No CPIC alert raised"), "what the engine did — procedural, checkable");
+  assert.ok(
+    !html.includes("No pharmacogenomic contraindication"),
+    "the app never asserts a clinical conclusion in its own words (0 matches in any data file)",
+  );
   assert.ok(!html.includes("DO NOT PRESCRIBE"), "no red card on the same drug");
   assert.ok(!html.includes("Override"), "nothing to override");
+});
+
+// THE test of this fix round: a patient with a result for a gene OTHER than
+// the drug's gene must NOT produce a green clearance. pt_reyes + capecitabine
+// is a real fixture exhibiting the live defect (docs/phase6/
+// finding-reyes-false-clearance.png): only a CYP2D6 result, no DPYD result,
+// evaluate() null — and the old branch rendered "✓ No pharmacogenomic
+// contraindication. CYP2D6 Ultrarapid Metabolizer." Correct and buggy values
+// differ on every assertion below (4a): the buggy render contains the
+// forbidden phrase, the tick, the seal colour, and the irrelevant gene.
+test("AlertCard: Reyes + capecitabine — a result for the WRONG gene must never render a clearance", () => {
+  const p = patient("pt_reyes");
+  const response = respond(p, "capecitabine");
+  assert.equal(response.alert, null, "no DPYD result -> null alert, which is exactly the trap");
+  assert.ok(response.genesAssessed, "the response carries the gene-coverage facts");
+  assert.equal(response.genesAssessed[0].assessed, false);
+
+  const html = renderAlertCard(response, p);
+  const visible = html.replace(/<[^>]+>/g, " ");
+
+  assert.ok(!html.includes("No pharmacogenomic contraindication"), "the fabricated clearance is gone");
+  assert.ok(!html.includes("✓"), "no tick for a gene that was never assessed");
+  assert.ok(!html.includes("text-seal"), "not painted in the clearance colour");
+  assert.ok(html.includes("text-amber"), "rendered as an amber unknown, per the honest-absence lines");
+  assert.ok(visible.includes("DPYD not assessed"), "the missing gene is named explicitly");
+  assert.ok(visible.includes("no result on file"), "and the reason is stated");
+  assert.ok(/incomplete/i.test(visible), "screening is stated incomplete, never clear");
+  assert.ok(
+    !visible.includes("CYP2D6"),
+    "the gene irrelevant to this drug is not cited on this order",
+  );
 });
 
 test("AlertCard critical: Reyes + codeine renders a DIFFERENT verbatim CPIC text", () => {

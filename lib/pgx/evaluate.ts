@@ -10,7 +10,14 @@
  * `sourceUrl` is the entry's own `_source`, never reconstructed.
  */
 import { randomBytes } from "node:crypto";
-import type { Alert, EvidenceSnapshot, GeneResult, Patient, Severity } from "../contracts";
+import type {
+  Alert,
+  EvidenceSnapshot,
+  GeneAssessment,
+  GeneResult,
+  Patient,
+  Severity,
+} from "../contracts";
 import { stableHash } from "../ledger/hash";
 import { fdaAssociation } from "./fda";
 import { getIndex, type CpicEntry, type CpicIndex } from "./index";
@@ -94,6 +101,47 @@ export function evaluate(
   }
 
   return best;
+}
+
+/**
+ * Which of THIS DRUG's genes were actually assessed. `index[drug]`'s keys are
+ * exactly the set of genes CPIC associates with the drug, so the answer is
+ * derived from data already on disk — nothing is invented.
+ *
+ * Exists because evaluate() returning null is ambiguous: "assessed and no
+ * alert raised" and "the relevant gene was never tested" produce the identical
+ * null, and phase6's cross-review caught the UI rendering the second as the
+ * first (a green clearance for pt_reyes + capecitabine citing CYP2D6, a gene
+ * irrelevant to the drug, with no DPYD result on file). The renderer needs
+ * these facts carried through the response, not re-derived in a component.
+ *
+ * Matching discipline is evaluate()'s own: exact on `lookup` after trim +
+ * case-fold, never fuzzy. A result whose lookup matches no CPIC row is NOT
+ * assessed (R-6's silent-join failure must not render as a pass).
+ */
+export function assessGenes(
+  patient: Patient,
+  drugName: string,
+  index: CpicIndex = getIndex(),
+): GeneAssessment[] | null {
+  const drug = drugName.trim().toLowerCase();
+  const byGene = index[drug];
+  if (!byGene) return null;
+
+  return Object.keys(byGene).map((gene) => {
+    const result = patient.results.find((r) => r.gene === gene) ?? null;
+    const want = result ? String(result.lookup).trim().toLowerCase() : null;
+    const matched =
+      want !== null &&
+      (byGene[gene] ?? []).some((e) => String(e.lookup).trim().toLowerCase() === want);
+    return {
+      gene,
+      assessed: matched,
+      resultOnFile: result !== null,
+      phenotype: result?.phenotype ?? null,
+      diplotype: result?.diplotype ?? null,
+    };
+  });
 }
 
 function buildAlert(

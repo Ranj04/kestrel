@@ -11,11 +11,11 @@
  * directly under node:test and pin the ledger.append call sites.
  */
 import { randomBytes } from "node:crypto";
-import type { Actor, Order, PrescribeResponse } from "../../../lib/contracts";
+import type { Order, PrescribeResponse } from "../../../lib/contracts";
 import { assess } from "../../../lib/credibility";
 import { append, clausesFor } from "../../../lib/ledger";
 import { getPatient } from "../../../lib/pgx";
-import { evaluate } from "../../../lib/pgx/evaluate";
+import { assessGenes, evaluate } from "../../../lib/pgx/evaluate";
 import { coverageFor } from "../../../lib/pgx/policy";
 import { resolveDrug } from "../../../lib/pgx/resolve";
 import { actorFor } from "../../../lib/actors";
@@ -111,6 +111,11 @@ export async function POST(req: Request): Promise<Response> {
     // Also at top level (contracts.ts): two demo patients have NO alert and
     // their coverage determination must still render.
     coverage: drugName ? coverageFor(patient, drugName) : null,
+    // Which of this drug's genes were actually assessed — carried through so
+    // the renderer never has to guess what a null alert means. Deleting this
+    // line turns the "Reyes carries gene coverage" pin in prescribe.test.ts
+    // red (4a-quater: the capability AND its call site are both pinned).
+    genesAssessed: drugName ? assessGenes(patient, drugName) : null,
     credibility: assess(alert),
     resolution: {
       matched: drugName !== null,

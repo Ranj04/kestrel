@@ -85,9 +85,10 @@
   --spacing-3: 0.5rem;
   --spacing-5: 1rem;
 
-  /* Separation is a 1px --line rule and whitespace, never a shadow.
-     shadow-2xl is the only shadow utility in use; it now renders nothing. */
-  --shadow-2xl: 0 0 0 0 rgb(0 0 0 / 0);
+  /* Separation is a 1px --line rule and whitespace, never a shadow. No shadow
+     utility is in use anywhere (phase6 fix round: the last consumer went with
+     Sol's ledger restyle, so the --shadow-2xl zeroing token went too — dead
+     CSS that looks load-bearing is exactly what the note below warns about). */
 }
 
 body {
@@ -116,18 +117,19 @@ body {
    the critical alert and a broken chain, nowhere else, and an ambient tint
    is "somewhere else". The ruled texture above stays; it is the paper. */
 
+/* phase6: retimed 0.7s/14px -> 200ms/8px per the design-notes Motion spec
+   ("8px upward translate, 200ms, cubic-bezier(0.2,0,0.2,1)"). Only the ledger
+   moves; this keyframe exists for Sol's record rows (6d/6f). TOKEN VALUE
+   CHANGE — Sol reads this file; flagged in the phase6 report. */
 @keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.rise { opacity: 0; animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.rise { opacity: 0; animation: rise 200ms cubic-bezier(0.2, 0, 0.2, 1) forwards; }
 
-/* The chain breaking. Used once, and it needs to read from across the room. */
-@keyframes break-flash {
-  0%, 100% { background-color: transparent; }
-  35%      { background-color: rgba(207, 69, 32, 0.28); }
-}
-.break-flash { animation: break-flash 0.9s ease-out 2; }
+/* phase6 fix round: @keyframes break-flash / .break-flash deleted. Sol's 6f
+   made the break INSTANT (design notes) and removed the only consumer — the
+   0.9s repeated flash fought that. Same failure shape as the note below. */
 
 /* phase5 stage 2b — the chain breaking. The rules that used to live HERE hooked
    Sol's class names (li.break-flash, div.bg-red-950/70) because components/ledger/
@@ -138,16 +140,17 @@ body {
    no transition (the break must be instant), MISMATCH in place of the tick. */
 
 
-/* WhyDrawer entrance — evidence sliding in over the prescribe pane. */
+/* WhyDrawer entrance — evidence sliding UP over the prescribe pane, per the
+   design import ("drawer slides 200ms", from the bottom). Same curve as .rise
+   so the product has one motion voice. */
 @keyframes slide-in {
-  from { opacity: 0; transform: translateX(-24px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-.slide-in { animation: slide-in 0.22s ease-out; }
+.slide-in { animation: slide-in 200ms cubic-bezier(0.2, 0, 0.2, 1); }
 
 @media (prefers-reduced-motion: reduce) {
   .rise { animation: none; opacity: 1; }
-  .break-flash { animation: none; }
   .slide-in { animation: none; }
 }
 

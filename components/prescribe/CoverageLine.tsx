@@ -19,7 +19,7 @@ const TONE: Record<Coverage["determination"], string> = {
 export function CoverageLine({ coverage }: { coverage: Coverage }) {
   return (
     <div className="border-t border-line pt-0.5">
-      <p className="font-mono text-[11px]">
+      <p className="font-mono text-xs">
         <span className={`mr-2 border px-1.5 py-0.5 font-semibold uppercase ${TONE[coverage.determination]}`}>
           {coverage.determination}
         </span>
@@ -29,9 +29,9 @@ export function CoverageLine({ coverage }: { coverage: Coverage }) {
       </p>
       {/* clause text is the R-19 reserve lever: verbatim always, but it gives up
           leading before anything clinical gives up anything (phase5 stage 2). */}
-      <p className="mt-0.5 text-[11px] leading-tight text-ink-soft">{coverage.clauseText}</p>
+      <p className="mt-0.5 text-xs leading-tight text-ink-soft">{coverage.clauseText}</p>
       {coverage.alternative && (
-        <p className="mt-0.5 font-mono text-[11px] text-ink">Alternative: {coverage.alternative}</p>
+        <p className="mt-0.5 font-mono text-xs text-ink">Alternative: {coverage.alternative}</p>
       )}
     </div>
   );

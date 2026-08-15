@@ -73,16 +73,19 @@ export default function Home() {
   // have NO alert and their determination must still render. Under, never above.
   const coverage = response ? (response.alert ? response.alert.coverage : response.coverage) : null;
 
-  // phase5 stage 2a: a critical alert owns the ENTIRE prescribing pane. The
-  // vermilion field below is absolute inset-0 (z-10); the patient card rides
-  // ABOVE it dimmed (z-20) so its tabs remain the demo's way out of the state,
-  // the order form stays mounted BENEATH it — visibly blocked; and the alert
-  // content (z-20) reclaims the covered form's flow height via -mt-14.
+  // phase6 6a: a critical alert owns the ENTIRE prescribing pane. The paper
+  // field below is absolute inset-0 (z-10); the patient card rides ABOVE it
+  // dimmed (z-20) so its tabs remain the demo's way out of the state; the
+  // order form stays mounted BENEATH it — visibly blocked; and the alert
+  // content is an absolute overlay (z-20) beginning just below the tab row,
+  // per the design import's inset-0 takeover — so the alert's height budget is
+  // the pane, not the space left under the chart. top-16 (64px) clears the
+  // header row + tab row (8 + 20 + 4 + 28 = 60px, measured at 1280x720).
   const critical = response?.alert?.severity === "critical";
 
   return (
     <main className="flex h-dvh flex-col">
-      <div className="border-b border-line bg-paper-raised px-6 py-1 text-center font-mono text-[11px] tracking-wide text-ink-soft">
+      <div className="border-b border-line bg-paper-raised px-6 py-1 text-center font-mono text-sm uppercase tracking-[0.16em] text-ink-soft">
         SYNTHETIC DATA — no real patient information
       </div>
 
@@ -93,42 +96,44 @@ export default function Home() {
             recommendation blockquote (19px) was deliberately NOT shrunk. */}
         <section className="relative flex min-h-0 flex-col gap-1.5 overflow-hidden border-r border-line px-5 py-2.5">
           <div className="flex items-baseline justify-between leading-none">
-            <h1 className="font-mono text-[10px] tracking-[0.2em] text-ink-soft">PRESCRIBE</h1>
-            <span className="font-display text-[12px] text-ink-soft">
+            <h1 className="font-mono text-xs tracking-[0.18em] text-ink-soft">PRESCRIBE</h1>
+            <span className="font-display text-sm text-ink-soft">
               Kestrel · pharmacogenomic check
             </span>
           </div>
 
-          {/* recedes behind the field when critical — dimmed, NOT unmounted; kept
-              above the field (z-20) so the patient tabs stay clickable: switching
-              patients is the only exit from a critical state and must survive it. */}
-          <div className={critical ? "relative z-20 opacity-40" : undefined}>
+          {/* recedes when critical — dimmed, NOT unmounted. The takeover overlay
+              below starts at top-16, just under the tab row, so the tabs stay
+              crisp and clickable: switching patients is the only exit from a
+              critical state and must survive it. The card BODY falls behind the
+              overlay's frosted ground. */}
+          <div className={critical ? "opacity-40" : undefined}>
             <PatientCard patients={PATIENTS} selectedId={patientId} onSelect={selectPatient} />
           </div>
 
-          {/* recedes BENEATH the field when critical: still mounted, still dimmed,
-              physically unreachable — the software blocking the order is the point. */}
+          {/* recedes BENEATH the overlay when critical: still mounted, still
+              dimmed, physically unreachable — the software blocking the order is
+              the point. */}
           <div className={critical ? "opacity-40" : undefined}>
             <OrderForm onSubmit={(raw) => void placeOrder(raw)} pending={pending} response={response} />
           </div>
 
           {/* amber, not vermilion: a fetch failure is a caution, and --accent is reserved
               for the critical alert and a broken chain (phase5 stage 1). */}
-          {error && <p className="font-mono text-[12px] text-amber">{error}</p>}
+          {error && <p className="font-mono text-sm text-amber">{error}</p>}
 
-          {/* the vermilion field: edge to edge, instant — no easing, nothing appended
-              below a form. AlertCard's critical branch is the content that sits on it. */}
-          {/* Design handoff: the field is PAPER at 93%, not vermilion. The blocking
-              signal is the D1 headline in --accent; flooding the pane with accent
-              spends the colour everywhere and drops the coverage slip and
-              credibility grid onto red, where ink text stops being legible. */}
-          {critical && <div aria-hidden className="absolute inset-0 z-10 bg-paper/[0.93]" />}
-
+          {/* Design handoff: the takeover ground is PAPER at 93%, not vermilion.
+              The blocking signal is the D1 headline in --accent; flooding the pane
+              with accent spends the colour everywhere and drops the coverage slip
+              and credibility grid onto red, where ink text stops being legible.
+              The overlay IS the field — one wash, edge to edge, instant (no
+              easing), and the chart it covers shows through at 7%: receded, never
+              unmounted. */}
           {response ? (
             <div
               className={
                 critical
-                  ? "relative z-20 -mt-14 flex min-h-0 flex-1 flex-col"
+                  ? "absolute inset-x-0 top-16 bottom-0 z-20 flex min-h-0 flex-col bg-paper/[0.93] px-5 pb-1.5"
                   : "flex min-h-0 flex-col gap-1.5"
               }
             >
@@ -142,7 +147,7 @@ export default function Home() {
               {critical ? (
                 // Coverage stays UNDER the clinical block, by contract. On the
                 // field it needs its own paper ground to stay legible.
-                <div className="mt-auto flex min-h-0 flex-col gap-1.5 pt-1">
+                <div className="mt-auto flex min-h-0 flex-col gap-1.5 pt-0.5">
                   {coverage && (
                     <div className="border border-line bg-paper-raised px-4 py-0.5">
                       <CoverageLine coverage={coverage} />
@@ -159,7 +164,7 @@ export default function Home() {
             </div>
           ) : (
             !error && (
-              <p className="font-mono text-[12px] text-ink-soft/70">
+              <p className="font-mono text-sm text-ink-soft/70">
                 Select a patient and place an order to run the check.
               </p>
             )
