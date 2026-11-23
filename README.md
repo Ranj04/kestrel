@@ -7,7 +7,7 @@ A pharmacogenomic prescribing check with a regulator-legible audit trail underne
 > A kestrel hovers completely motionless, watching, before it commits. Hold, check,
 > then act — which is what this does to a drug order.
 
-Built for Biopharma Hack Day, AWS Builder Loft, 13 Aug 2026.
+Built for Biopharma Hack Day, AWS Builder Loft, 13 Aug 2026, where it placed 3rd.
 
 **Live:** https://kestrel-olive.vercel.app · **Run it locally:** [below](#run-it) ·
 **Demo script:** [`demo/RUNBOOK.md`](demo/RUNBOOK.md)
